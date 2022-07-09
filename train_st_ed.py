@@ -199,6 +199,8 @@ def execute_test(tag, data_dict):
             img.show()
             output_dict, loss_dict = network(input_dict)
             print(output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()[0].shape)
+            #if tag == 'xgaze':
+            #    img = np.concatenate([((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255/2).astype(np.uint8)],axis=2)
             img = np.concatenate([((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255/2).astype(np.uint8)],axis=2)
             img = Image.fromarray(img[0])
             log_image = wandb.Image(img)
@@ -293,7 +295,7 @@ if config.compute_full_result:
         #('gc/val', config.gazecapture_file, False, all_gc_prefixes['val']),
         #('gc/test', config.gazecapture_file, False, all_gc_prefixes['test']),
         #('mpi', config.mpiigaze_file, False, None),
-        ('xgaze', config.xgaze_file, False, None)
+        ('xgaze', config.xgaze_file, True, None)
         #('columbia', config.columbia_file, True, None),
         #('eyediap', config.eyediap_file, True, None),
     ]:
