@@ -19,6 +19,7 @@ from utils import save_images, worker_init_fn, send_data_dict_to_gpu, recover_im
 from core import DefaultConfig
 from models import STED
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
+import wandb
 
 # Set Configurations
 config = DefaultConfig()
@@ -52,11 +53,11 @@ if not config.skip_training:
                                num_labeled_samples=config.num_labeled_samples if config.semi_supervised else None)
     # Define multiple val/test datasets for evaluation during training
     for tag, hdf_file, is_bgr, prefixes in [
-        ('gc/val', config.gazecapture_file, False, all_gc_prefixes['val']),
-        ('gc/test', config.gazecapture_file, False, all_gc_prefixes['test']),
+        #('gc/val', config.gazecapture_file, False, all_gc_prefixes['val']),
+        #('gc/test', config.gazecapture_file, False, all_gc_prefixes['test']),
         ('mpi', config.mpiigaze_file, False, None),
-        ('columbia', config.columbia_file, True, None),
-        ('eyediap', config.eyediap_file, True, None),
+        #('columbia', config.columbia_file, True, None),
+        #('eyediap', config.eyediap_file, True, None),
     ]:
         dataset = HDFDataset(hdf_file_path=hdf_file,
                              prefixes=prefixes,
@@ -277,11 +278,12 @@ if config.compute_full_result:
     logging.info('Computing complete test results for final model...')
     all_data = OrderedDict()
     for tag, hdf_file, is_bgr, prefixes in [
-        ('gc/val', config.gazecapture_file, False, all_gc_prefixes['val']),
-        ('gc/test', config.gazecapture_file, False, all_gc_prefixes['test']),
+        #('gc/val', config.gazecapture_file, False, all_gc_prefixes['val']),
+        #('gc/test', config.gazecapture_file, False, all_gc_prefixes['test']),
         ('mpi', config.mpiigaze_file, False, None),
-        ('columbia', config.columbia_file, True, None),
-        ('eyediap', config.eyediap_file, True, None),
+        #('xgaze', config.xgaze_file, False, None)
+        #('columbia', config.columbia_file, True, None),
+        #('eyediap', config.eyediap_file, True, None),
     ]:
         # Define dataset structure based on selected prefixes
         dataset = HDFDataset(hdf_file_path=hdf_file,
