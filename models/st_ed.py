@@ -37,6 +37,7 @@ class STED(nn.Module):
 
     def __init__(self):
         super(STED, self).__init__()
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.configuration = []
         if config.size_0d_unit > 0:
             self.configuration += [(0, config.size_0d_unit)]
@@ -46,12 +47,12 @@ class STED(nn.Module):
         self.num_all_pseudo_labels = np.sum([dof for dof, _ in self.configuration])
         self.num_all_embedding_features = np.sum([
             (dof + 1) * num_feats for dof, num_feats in self.configuration])
-        self.encoder = Encoder(self.num_all_pseudo_labels, self.num_all_embedding_features, self.configuration).to("cuda")
-        self.decoder = Decoder(self.num_all_embedding_features).to("cuda")
-        self.lpips = lpips.LPIPS(net='alex').to("cuda")
-        self.GazeHeadNet_train = GazeHeadNet().to("cuda")
-        self.GazeHeadNet_eval = GazeHeadResNet().to("cuda")
-        self.discriminator = PatchGAN(input_nc=3).to('cuda')
+        self.encoder = Encoder(self.num_all_pseudo_labels, self.num_all_embedding_features, self.configuration).to(self.device)
+        self.decoder = Decoder(self.num_all_embedding_features).to(self.device)
+        self.lpips = lpips.LPIPS(net='alex').to(self.device)
+        self.GazeHeadNet_train = GazeHeadNet().to(self.device)
+        self.GazeHeadNet_eval = GazeHeadResNet().to(self.device)
+        self.discriminator = PatchGAN(input_nc=3).to(self.device)
         self.generator_params = []
         for name, param in self.named_parameters():
             if 'encoder' in name or 'decoder' in name or 'classifier' in name:
@@ -155,7 +156,7 @@ class STED(nn.Module):
         num_0d_units = 1 if config.size_0d_unit > 0 else 0
         for dof, num_feats in self.configuration:
             if dof != 0:
-                random_angle = (torch.rand(batch_size, dof).to("cuda") - 0.5) * np.pi * 0.2
+                random_angle = (torch.rand(batch_size, dof).to(self.device) - 0.5) * np.pi * 0.2
                 random_angle += pseudo_labels_a[idx]
                 if dof == 2:
                     rotated_embedding = torch.matmul(self.rotation_matrix_2d(random_angle, False), torch.matmul(
@@ -226,7 +227,7 @@ class STED(nn.Module):
             num_0d_units = 1 if config.size_0d_unit > 0 else 0
             random = np.random.randint(2, size=[num_0d_units + config.num_1d_units + config.num_2d_units,
                                                 config.batch_size, 1, 1]).tolist()
-            random_tensor = torch.tensor(random, dtype=torch.float, requires_grad=False).to("cuda")
+            random_tensor = torch.tensor(random, dtype=torch.float, requires_grad=False).to(self.device)
 
             normalized_embeddings_from_a_mix = self.rotate(embeddings_a, pseudo_labels_a, random_tensor, inverse=True)
             embeddings_a_to_mix = self.rotate(normalized_embeddings_from_a_mix, pseudo_labels_b, random_tensor)
@@ -363,7 +364,7 @@ class STED(nn.Module):
             walk = []
             embeddings_copy = embeddings_a.copy()
             for j in np.linspace(-np.pi / 2 * 0.9, np.pi / 2 * 0.9, num=walk_len, endpoint=True):
-                angle = torch.tensor(j, dtype=torch.float).unsqueeze(0).expand(batch_size, -1).to("cuda")
+                angle = torch.tensor(j, dtype=torch.float).unsqueeze(0).expand(batch_size, -1).to(self.device)
                 embed = torch.matmul(self.rotation_matrix_1d(angle, False), torch.matmul(
                     self.rotation_matrix_1d(pseudo_labels_a[num_0d_unit + i], True), embeddings_a[num_0d_unit + i]))
                 embeddings_copy[num_0d_unit + i] = embed
@@ -398,7 +399,7 @@ class STED(nn.Module):
             walk = []
             embeddings_copy = embeddings_a.copy()
             for j in walk_2d:
-                angle = torch.tensor(j, dtype=torch.float).unsqueeze(0).expand(batch_size, -1).to("cuda")
+                angle = torch.tensor(j, dtype=torch.float).unsqueeze(0).expand(batch_size, -1).to(self.device)
                 embed = torch.matmul(self.rotation_matrix_2d(angle, False), torch.matmul(
                     self.rotation_matrix_2d(pseudo_labels_a[num_0d_1d_unit + i], True),
                     embeddings_a[num_0d_1d_unit + i]))

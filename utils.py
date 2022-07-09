@@ -188,8 +188,8 @@ def save_model(network, current_step):
     torch.save(models, path)
 
 
-def load_model(network, path):
-    checkpoint = torch.load(path)
+def load_model(network, path,device):
+    checkpoint = torch.load(path,map_location=torch.device(device))
     network.encoder.load_state_dict(checkpoint['encoder'])
     network.decoder.load_state_dict(checkpoint['decoder'])
     network.discriminator.load_state_dict(checkpoint['discriminator'])
