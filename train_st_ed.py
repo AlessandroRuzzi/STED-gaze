@@ -202,8 +202,8 @@ def execute_test(tag, data_dict):
             img = np.concatenate([((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255/2).astype(np.uint8)],axis=2)
             img = Image.fromarray(img[0])
             log_image = wandb.Image(img)
-            log_image.show()
-            #wandb.log({"Sted Prediction": log_image})
+            #log_image.show()
+            wandb.log({"Sted Prediction": log_image})
             for key, value in loss_dict.items():
                 test_losses.add(key, value.detach().cpu().numpy())
     test_loss_means = test_losses.means()
