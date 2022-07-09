@@ -197,8 +197,8 @@ def execute_test(tag, data_dict):
             input_dict = send_data_dict_to_gpu(input_dict, device)
             output_dict, loss_dict = network(input_dict)
             print(output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()[0].shape)
-            img = np.concatenate([(input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0],(input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0],(output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0]],axis=2)
-            img = Image.fromarray(img[0])
+            #img = np.concatenate([(input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0],(input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0],(output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0]],axis=2)
+            img = Image.fromarray((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0])
             log_image = wandb.Image(img)
             wandb.log({"Sted Prediction": log_image})
             for key, value in loss_dict.items():
