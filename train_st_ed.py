@@ -287,15 +287,15 @@ if not config.skip_training:
     del all_data
 # Compute evaluation results on complete test sets
 if config.compute_full_result:
-    wandb.init(project="sted evalaution", config={"gpu_id": 0})
+    #wandb.init(project="sted evalaution", config={"gpu_id": 0})
     logging.info('Computing complete test results for final model...')
 
     all_data = OrderedDict()
     for tag, hdf_file, is_bgr, prefixes in [
         #('gc/val', config.gazecapture_file, False, all_gc_prefixes['val']),
         #('gc/test', config.gazecapture_file, False, all_gc_prefixes['test']),
-        #('mpi', config.mpiigaze_file, False, None),
-        ('xgaze', config.xgaze_file, False, None)
+        ('mpi', config.mpiigaze_file, False, None),
+        #('xgaze', config.xgaze_file, False, None)
         #('columbia', config.columbia_file, True, None),
         #('eyediap', config.eyediap_file, True, None),
     ]:
