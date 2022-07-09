@@ -295,7 +295,7 @@ if config.compute_full_result:
         #('gc/val', config.gazecapture_file, False, all_gc_prefixes['val']),
         #('gc/test', config.gazecapture_file, False, all_gc_prefixes['test']),
         #('mpi', config.mpiigaze_file, False, None),
-        ('xgaze', config.xgaze_file, True, None)
+        ('xgaze', config.xgaze_file, False, None)
         #('columbia', config.columbia_file, True, None),
         #('eyediap', config.eyediap_file, True, None),
     ]:

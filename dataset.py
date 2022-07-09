@@ -13,6 +13,7 @@ import cv2
 import h5py
 from core import DefaultConfig
 import random
+from PIL import Image
 import logging
 
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
@@ -101,7 +102,7 @@ class HDFDataset(Dataset):
             ycrcb = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
         else:
             ycrcb = cv2.cvtColor(image, cv2.COLOR_RGB2YCrCb)
-        ycrcb[:, :, 0] = cv2.equalizeHist(ycrcb[:, :, 0])
+        #ycrcb[:, :, 0] = cv2.equalizeHist(ycrcb[:, :, 0])
         image = cv2.cvtColor(ycrcb, cv2.COLOR_YCrCb2RGB)
         image = np.transpose(image, [2, 0, 1])  # Colour image
         image = 2.0 * image / 255.0 - 1
@@ -129,6 +130,8 @@ class HDFDataset(Dataset):
             eyes = self.preprocess_image(group['pixels'][index, :])
             g = group['labels'][index, :2]
             h = group['labels'][index, 2:4]
+            #img = Image.fromarray(((np.transpose(eyes,[1,2,0]) +1)* 255/2).astype(np.uint8))
+            #img.show()
             return eyes, g, h
         # Grab 1st (input) entry
         eyes_a, g_a, h_a = retrieve(group_a, idx_a)
