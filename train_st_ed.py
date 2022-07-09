@@ -131,7 +131,7 @@ _ = saver.load_last_checkpoint()
 del saver
 
 if config.load_step != 0:
-    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '.pt'))
+    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '.pt'),device)
     logging.info("Loaded checkpoints from step " + str(config.load_step))
 
 # Transfer on the GPU before constructing and optimizer
@@ -195,12 +195,15 @@ def execute_test(tag, data_dict):
         for input_dict in data_dict['dataloader']:
             print("here")
             input_dict = send_data_dict_to_gpu(input_dict, device)
+            img = Image.fromarray(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8)[0])
+            img.show()
             output_dict, loss_dict = network(input_dict)
             print(output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()[0].shape)
-            #img = np.concatenate([(input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0],(input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0],(output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0]],axis=2)
-            img = Image.fromarray((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0])
+            img = np.concatenate([((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255/2).astype(np.uint8)],axis=2)
+            img = Image.fromarray(img[0])
             log_image = wandb.Image(img)
-            wandb.log({"Sted Prediction": log_image})
+            log_image.show()
+            #wandb.log({"Sted Prediction": log_image})
             for key, value in loss_dict.items():
                 test_losses.add(key, value.detach().cpu().numpy())
     test_loss_means = test_losses.means()
@@ -282,7 +285,7 @@ if not config.skip_training:
     del all_data
 # Compute evaluation results on complete test sets
 if config.compute_full_result:
-    wandb.init(project="sted evalaution", config={"gpu_id": 0})
+    #wandb.init(project="sted evalaution", config={"gpu_id": 0})
     logging.info('Computing complete test results for final model...')
 
     all_data = OrderedDict()
