@@ -285,7 +285,7 @@ if not config.skip_training:
     del all_data
 # Compute evaluation results on complete test sets
 if config.compute_full_result:
-    #wandb.init(project="sted evalaution", config={"gpu_id": 0})
+    wandb.init(project="sted evalaution", config={"gpu_id": 0})
     logging.info('Computing complete test results for final model...')
 
     all_data = OrderedDict()
