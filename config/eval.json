@@ -1,6 +1,6 @@
 {
     "mpiigaze_file": "datasets/MPIIGaze.h5",
-    
+    "xgaze_file": "datasets/xgaze.h5",
     "save_path": "",
     "batch_size": 20,
     "growth_rate": 32,

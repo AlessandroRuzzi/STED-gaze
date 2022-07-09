@@ -2,3 +2,15 @@
 !.gitkeep
 
 /checkpoints/
+
+/__pycache__/*
+
+src.tar
+
+/models/__pycache__/*
+
+/configs/
+
+/core/__pycache__/*
+
+/runs/*
