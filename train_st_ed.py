@@ -196,7 +196,7 @@ def execute_test(tag, data_dict):
             print("here")
             input_dict = send_data_dict_to_gpu(input_dict, device)
             output_dict, loss_dict = network(input_dict)
-            img = Image.fromarray(output_dict['image_b_hat'].detach().cpu().numpy())
+            img = Image.fromarray(output_dict['image_b_hat'][0].detach().cpu().numpy())
             log_image = wandb.Image(img)
             wandb.log({"Sted Prediction": log_image})
             for key, value in loss_dict.items():
