@@ -32,9 +32,10 @@ def step_number_from_fname(fpath):
 
 class CheckpointsManager(object):
 
-    def __init__(self, network, output_dir):
+    def __init__(self, network, output_dir,device):
         self.network = network
         self.output_dir = os.path.realpath(output_dir + '/checkpoints')
+        self.device = device
 
     @property
     def all_available_checkpoint_files(self):
@@ -60,7 +61,7 @@ class CheckpointsManager(object):
 
     def load_checkpoint(self, step_number, checkpoint_fpath):
         assert os.path.isfile(checkpoint_fpath)
-        weights = torch.load(checkpoint_fpath)
+        weights = torch.load(checkpoint_fpath,map_location=torch.device(self.device))
 
         # If was stored using DataParallel but being read on 1 GPU
         if torch.cuda.device_count() == 1:

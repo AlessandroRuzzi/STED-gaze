@@ -121,12 +121,12 @@ if not config.skip_training:
 network = STED().to(device)
 # Load weights if available
 from checkpoints_manager import CheckpointsManager
-
-saver = CheckpointsManager(network.GazeHeadNet_eval, config.eval_gazenet_savepath)
+print('---->> ',config.eval_gazenet_savepath)
+saver = CheckpointsManager(network.GazeHeadNet_eval, config.eval_gazenet_savepath,device)
 _ = saver.load_last_checkpoint()
 del saver
 
-saver = CheckpointsManager(network.GazeHeadNet_train, config.gazenet_savepath)
+saver = CheckpointsManager(network.GazeHeadNet_train, config.gazenet_savepath,device)
 _ = saver.load_last_checkpoint()
 del saver
 
@@ -195,10 +195,10 @@ def execute_test(tag, data_dict):
         for input_dict in data_dict['dataloader']:
             print("here")
             input_dict = send_data_dict_to_gpu(input_dict, device)
-            img = Image.fromarray(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8)[0])
-            img.show()
+            #img = Image.fromarray(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8)[0])
+            #img.show()
             output_dict, loss_dict = network(input_dict)
-            print(output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()[0].shape)
+            #print(output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()[0].shape)
             #if tag == 'xgaze':
             #    img = np.concatenate([((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255/2).astype(np.uint8)],axis=2)
             #img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)

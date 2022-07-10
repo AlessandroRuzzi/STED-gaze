@@ -1,6 +1,12 @@
 /datasets/*
 !.gitkeep
 
+/baseline_estimator_vgg/checkpoints/*
+!.gitkeep
+
+/baseline_estimator_resnet/checkpoints/*
+!.gitkeep
+
 /checkpoints/
 
 /__pycache__/*
