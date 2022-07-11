@@ -24,6 +24,7 @@ from PIL import Image
 
 # Set Configurations
 config = DefaultConfig()
+wandb.init(project="sted evalaution", config={"gpu_id": 0})
 script_init_common()
 # Set device
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -166,7 +167,7 @@ def execute_training_step(current_step):
     loss_dict, generated = network.optimize(input, current_step)
 
     if current_step %2 == 0:
-        img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((generated['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
+        img = np.concatenate([np.clip(((input['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((generated['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
         img = Image.fromarray(img[0])
         log_image = wandb.Image(img)
         #log_image.show()
@@ -295,7 +296,7 @@ if not config.skip_training:
     del all_data
 # Compute evaluation results on complete test sets
 if config.compute_full_result:
-    wandb.init(project="sted evalaution", config={"gpu_id": 0})
+    
     logging.info('Computing complete test results for final model...')
 
     all_data = OrderedDict()
