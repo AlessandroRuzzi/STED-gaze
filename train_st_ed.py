@@ -167,6 +167,8 @@ def execute_training_step(current_step):
     loss_dict, generated = network.optimize(input, current_step)
 
     if current_step %2 == 0:
+        print(input.shape)
+        print(generated.shape)
         img = np.concatenate([np.clip(((input['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((generated['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
         img = Image.fromarray(img[0])
         log_image = wandb.Image(img)
