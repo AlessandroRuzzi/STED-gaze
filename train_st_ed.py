@@ -201,11 +201,11 @@ def execute_test(tag, data_dict):
             #print(output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()[0].shape)
             #if tag == 'xgaze':
             #    img = np.concatenate([((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255/2).astype(np.uint8)],axis=2)
-            #img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
-            #img = Image.fromarray(img[0])
-            #log_image = wandb.Image(img)
+            img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
+            img = Image.fromarray(img[0])
+            log_image = wandb.Image(img)
             #log_image.show()
-            #wandb.log({"Sted Prediction": log_image})
+            wandb.log({"Sted Prediction": log_image})
             for key, value in loss_dict.items():
                 test_losses.add(key, value.detach().cpu().numpy())
     test_loss_means = test_losses.means()
@@ -294,8 +294,8 @@ if config.compute_full_result:
     for tag, hdf_file, is_bgr, prefixes in [
         #('gc/val', config.gazecapture_file, False, all_gc_prefixes['val']),
         #('gc/test', config.gazecapture_file, False, all_gc_prefixes['test']),
-        ('mpi', config.mpiigaze_file, False, None),
-        #('xgaze', config.xgaze_file, False, None)
+        #('mpi', config.mpiigaze_file, False, None),
+        ('xgaze', config.xgaze_file, False, None)
         #('columbia', config.columbia_file, True, None),
         #('eyediap', config.eyediap_file, True, None),
     ]:
