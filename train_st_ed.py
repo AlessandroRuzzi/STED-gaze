@@ -47,8 +47,8 @@ with open('./gazecapture_split.json', 'r') as f:
 if not config.skip_training:
     # Define single training dataset
     train_prefixes = all_gc_prefixes['train']
-    train_dataset = HDFDataset(hdf_file_path=config.gazecapture_file,
-                               prefixes=train_prefixes,
+    train_dataset = HDFDataset(hdf_file_path=config.xgaze_file,
+                               #prefixes=train_prefixes,
                                is_bgr=False,
                                get_2nd_sample=True,
                                num_labeled_samples=config.num_labeled_samples if config.semi_supervised else None)
@@ -56,7 +56,8 @@ if not config.skip_training:
     for tag, hdf_file, is_bgr, prefixes in [
         #('gc/val', config.gazecapture_file, False, all_gc_prefixes['val']),
         #('gc/test', config.gazecapture_file, False, all_gc_prefixes['test']),
-        ('mpi', config.mpiigaze_file, False, None),
+        #('mpi', config.mpiigaze_file, False, None),
+        ('xgaze_val', config.xgaze_val_file, False, None),
         #('columbia', config.columbia_file, True, None),
         #('eyediap', config.eyediap_file, True, None),
     ]:
@@ -164,6 +165,13 @@ def execute_training_step(current_step):
     # forward + backward + optimize
     loss_dict, generated = network.optimize(input, current_step)
 
+    if current_step %2 == 0:
+        img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((generated['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
+        img = Image.fromarray(img[0])
+        log_image = wandb.Image(img)
+        #log_image.show()
+        wandb.log({"Sted Prediction": log_image})
+
     # save training samples in tensorboard
     if config.use_tensorboard and current_step % config.save_freq_images == 0 and current_step != 0:
         for image_index in range(5):
@@ -205,7 +213,7 @@ def execute_test(tag, data_dict):
             img = Image.fromarray(img[0])
             log_image = wandb.Image(img)
             #log_image.show()
-            wandb.log({"Sted Prediction": log_image})
+            wandb.log({"Test Prediction": log_image})
             for key, value in loss_dict.items():
                 test_losses.add(key, value.detach().cpu().numpy())
     test_loss_means = test_losses.means()
