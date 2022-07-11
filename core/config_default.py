@@ -65,6 +65,7 @@ class DefaultConfig(object):
     mpiigaze_file = '.'
     gazecapture_file = '.'
     xgaze_file = '.'
+    xgaze_val_file = '.'
     save_path = '.'
     gazenet_savepath = '.'
     eval_gazenet_savepath = '.'
