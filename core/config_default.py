@@ -48,7 +48,7 @@ class DefaultConfig(object):
     num_data_loaders = 12
     decay_steps = 34480
     decay = 0.8
-    num_training_steps = 206865
+    num_training_steps = 300000
     l2_reg = 1e-4
     print_freq_train = 200
     print_freq_test = 4000
