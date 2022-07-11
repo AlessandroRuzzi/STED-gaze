@@ -7,7 +7,7 @@
     "eval_gazenet_savepath": ".../baseline_estimator_resnet/",
     "xgaze_file": "datasets/xgaze.h5",
     "xgaze_val_file": "datasets/xgaze_val.h5",
-    "save_path": "",
+    "save_path": "checkpoints",
     "batch_size": 20,
     "growth_rate": 32,
     "eval_batch_size": 32,
