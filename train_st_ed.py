@@ -273,6 +273,7 @@ if not config.skip_training:
                 # This might help with memory leaks
                 torch.cuda.empty_cache()
         # Visualization loop
+        """
         if (current_step != 0 and current_step % config.save_freq_images == 0) or current_step == config.num_training_steps - 1:
             network.eval()
             torch.cuda.empty_cache()
@@ -280,6 +281,7 @@ if not config.skip_training:
                 # save redirected, style modified samples
                 execute_visualize(test_visualize)
             torch.cuda.empty_cache()
+        """
         # Training step
         execute_training_step(current_step)
         # Print training loss
