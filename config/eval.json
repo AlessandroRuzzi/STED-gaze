@@ -1,7 +1,7 @@
 {
     "mpiigaze_file": "datasets/MPIIGaze.h5",
     "xgaze_file": "datasets/xgaze.h5",
-    "xgaze_val_file": "datasets/xgaze_eval_2.h5",
+    "xgaze_val_file": "datasets/xgaze_val.h5",
     "gazenet_savepath": "baseline_estimator_vgg/",
     "eval_gazenet_savepath": "baseline_estimator_resnet/",
     "save_path": "sted",
