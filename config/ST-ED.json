@@ -34,7 +34,7 @@
     "coeff_redirection_gaze_loss": 2.0,
     "use_mixing": true,
     "densenet_blocks":5,
-    "base_learning_rate": 0.000005,
+    "base_learning_rate": 0.00005,
     "use_apex": false,
     "compute_full_result": true,
     "load_step": 206865,
