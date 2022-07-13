@@ -213,7 +213,7 @@ def execute_training_step(current_step):
 
 def execute_test(tag, data_dict):
     test_losses = RunningStatistics()
-    path = "/sted/checkpoints/epoch_24_ckpt_128.pth.tar"
+    path = "sted/checkpoints/epoch_24_ckpt_128.pth.tar"
     model = gaze_network().to(device)
     state_dict = torch.load(path, map_location=torch.device("cpu"))
     #model.load_state_dict(state_dict=state_dict)
