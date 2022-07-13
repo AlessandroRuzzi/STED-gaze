@@ -26,7 +26,7 @@ from PIL import Image
 from torchvision import transforms
 
 trans = transforms.Compose([
-        #transforms.ToPILImage(),
+        transforms.ToPILImage(),
         transforms.ToTensor(),  # this also convert pixel value from [0,255] to [0,1]
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
                              std=[0.229, 0.224, 0.225]),
@@ -234,14 +234,23 @@ def execute_test(tag, data_dict):
             #if tag == 'xgaze':
             #    img = np.concatenate([((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255/2).astype(np.uint8)],axis=2)
             num_images += input_dict['image_b'].shape[0]
-            batch_images_norm = torch.reshape(trans(np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)),(input_dict['image_b'].shape[0],3,128,128)).to(device)
             print(num_images)
+            image_gt = np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
+            for i in range(image_gt.shape[0]):
+                image_gt[i,:] = trans(image_gt[i,:])
+            batch_images_norm = torch.reshape(image_gt,(input_dict['image_b'].shape[0],3,128,128)).to(device)
             pitchyaw_gt = model(batch_images_norm)
-            batch_images_norm = torch.reshape(trans(np.clip(((input_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)),(input_dict['image_b'].shape[0],3,128,128)).to(device)
+
+            image_gen = np.clip(((input_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
+            for i in range(image_gen.shape[0]):
+                image_gen[i,:] = trans(image_gen[i,:])
+            batch_images_norm = torch.reshape(image_gen,(input_dict['image_b'].shape[0],3,128,128)).to(device)
             pitchyaw_gen = model(batch_images_norm)
+
             loss = losses.gaze_angular_loss(pitchyaw_gt,pitchyaw_gen)
             print(loss,torch.sum(loss))
             angular_loss += torch.sum(loss).detach().cpu().numpy()
+            
             img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
             img = Image.fromarray(img[0])
             log_image = wandb.Image(img)
