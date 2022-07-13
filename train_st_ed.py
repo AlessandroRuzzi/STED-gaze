@@ -9,6 +9,7 @@ import gc
 import json
 import os
 import cv2
+import losses
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Subset
@@ -17,10 +18,20 @@ from dataset import HDFDataset
 from utils import save_images, worker_init_fn, send_data_dict_to_gpu, recover_images, def_test_list, RunningStatistics,\
     adjust_learning_rate, script_init_common, get_example_images, save_model, load_model
 from core import DefaultConfig
+from models.xgaze_baseline import gaze_network
 from models import STED
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
 import wandb
 from PIL import Image
+from torchvision import transforms
+
+trans = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.ToTensor(),  # this also convert pixel value from [0,255] to [0,1]
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225]),
+        #transforms.Resize(size=(128,128)),
+    ])
 
 # Set Configurations
 config = DefaultConfig()
@@ -202,6 +213,15 @@ def execute_training_step(current_step):
 
 def execute_test(tag, data_dict):
     test_losses = RunningStatistics()
+    path = "checkpoints/epoch_24_ckpt_128.pth.tar"
+    model = gaze_network().to(device)
+    state_dict = torch.load(path, map_location=torch.device("cpu"))
+    #model.load_state_dict(state_dict=state_dict)
+    model.load_state_dict(state_dict=state_dict['model_state'])
+    model.eval()
+    print("Done")
+    angular_loss = 0.0
+    num_images = 0
     with torch.no_grad():
         network.eval()
         for input_dict in data_dict['dataloader']:
@@ -213,9 +233,19 @@ def execute_test(tag, data_dict):
             #print(output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()[0].shape)
             #if tag == 'xgaze':
             #    img = np.concatenate([((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255/2).astype(np.uint8)],axis=2)
+            num_images += input_dict['image_b'].shape[0]
+            batch_images_norm = torch.reshape(trans(np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)),(input_dict['image_b'].shape[0],3,128,128)).to(device)
+            print(num_images)
+            pitchyaw_gt = model(batch_images_norm)
+            batch_images_norm = torch.reshape(trans(np.clip(((input_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)),(input_dict['image_b'].shape[0],3,128,128)).to(device)
+            pitchyaw_gen = model(batch_images_norm)
+            loss = losses.gaze_angular_loss(pitchyaw_gt,pitchyaw_gen)
+            print(loss,torch.sum(loss))
+            angular_loss += torch.sum(loss).detach().cpu().numpy()
             img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
             img = Image.fromarray(img[0])
             log_image = wandb.Image(img)
+
             #log_image.show()
             wandb.log({"Test Prediction": log_image})
             for key, value in loss_dict.items():
@@ -224,6 +254,7 @@ def execute_test(tag, data_dict):
     logging.info('Test Losses at [%7d] for %10s: %s' %
                  (current_step, '[' + tag + ']',
                   ', '.join(['%s: %.6f' % v for v in test_loss_means.items()])))
+    wandb.log({'angular loss': angular_loss/num_images})
     if config.use_tensorboard:
         for k, v in test_loss_means.items():
             tensorboard.add_scalar('test/%s/%s' % (tag, k), v, current_step)
