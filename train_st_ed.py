@@ -236,22 +236,21 @@ def execute_test(tag, data_dict):
             num_images += input_dict['image_b'].shape[0]
             print(num_images)
             image_gt = np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
+            image_gen = np.clip(((input_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
             for i in range(image_gt.shape[0]):
                 print(i)
                 print(image_gt[i,:].shape)
-                image_gt[i,:] = trans(image_gt[i,:])
-            batch_images_norm = torch.reshape(image_gt,(input_dict['image_b'].shape[0],3,128,128)).to(device)
-            pitchyaw_gt = model(batch_images_norm)
+                image = trans(image_gt[i,:])
+                batch_images_norm = torch.reshape(image,(1,3,128,128)).to(device)
+                pitchyaw_gt = model(batch_images_norm)
 
-            image_gen = np.clip(((input_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
-            for i in range(image_gen.shape[0]):
-                image_gen[i,:] = trans(image_gen[i,:])
-            batch_images_norm = torch.reshape(image_gen,(input_dict['image_b'].shape[0],3,128,128)).to(device)
-            pitchyaw_gen = model(batch_images_norm)
+                image = trans(image_gen[i,:])
+                batch_images_norm = torch.reshape(image,(1,3,128,128)).to(device)
+                pitchyaw_gen = model(batch_images_norm)
 
-            loss = losses.gaze_angular_loss(pitchyaw_gt,pitchyaw_gen)
-            print(loss,torch.sum(loss))
-            angular_loss += torch.sum(loss).detach().cpu().numpy()
+                loss = losses.gaze_angular_loss(pitchyaw_gt,pitchyaw_gen)
+                print(loss)
+                angular_loss += loss.detach().cpu().numpy()
 
             img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
             img = Image.fromarray(img[0])
