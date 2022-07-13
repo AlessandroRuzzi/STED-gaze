@@ -236,8 +236,9 @@ def execute_test(tag, data_dict):
             num_images += input_dict['image_b'].shape[0]
             print(num_images)
             image_gt = np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
-            print(image_gt.shape)
             for i in range(image_gt.shape[0]):
+                print(i)
+                print(image_gt[i,:].shape)
                 image_gt[i,:] = trans(image_gt[i,:])
             batch_images_norm = torch.reshape(image_gt,(input_dict['image_b'].shape[0],3,128,128)).to(device)
             pitchyaw_gt = model(batch_images_norm)
