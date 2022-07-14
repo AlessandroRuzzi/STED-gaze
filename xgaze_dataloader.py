@@ -149,7 +149,7 @@ class GazeDataset(Dataset):
     def __getitem__(self, idx):
         key, idx = self.idx_to_kv[idx]
 
-        self.hdf = h5py.File(os.path.join(self.path, self.sub_folder, self.selected_keys[key]), 'r', swmr=True)
+        self.hdf = h5py.File(os.path.join(self.path, self.selected_keys[key]), 'r', swmr=True)
         assert self.hdf.swmr_mode
 
         # Get face image
