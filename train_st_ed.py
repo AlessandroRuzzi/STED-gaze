@@ -98,12 +98,12 @@ if not config.skip_training:
             ))
         all_data[tag] = {
             'dataset': dataset,
-            'dataloader': dataloader#DataLoader(dataset,
-                          #           batch_size=config.eval_batch_size,
-                          #           shuffle=False,
-                          #           num_workers=config.num_data_loaders,  # args.num_data_loaders,
-                          #           pin_memory=True,
-                          #           ),
+            'dataloader': DataLoader(dataset,
+                                     batch_size=config.eval_batch_size,
+                                     shuffle=False,
+                                     num_workers=config.num_data_loaders,  # args.num_data_loaders,
+                                     pin_memory=True,
+                                     ),
         }
     """
     train_dataloader = DataLoader(train_dataset,
