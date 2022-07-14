@@ -107,6 +107,7 @@ class GazeDataset(Dataset):
         # Select keys
         # TODO: select only people with sufficient entries?
         self.selected_keys = [k for k in keys_to_use]
+        self.prefixes = keys_to_use
         assert len(self.selected_keys) > 0
 
         for num_i in range(0, len(self.selected_keys)):
