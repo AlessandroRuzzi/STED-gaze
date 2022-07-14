@@ -103,7 +103,7 @@ class GazeDataset(Dataset):
         self.sub_folder = sub_folder
         self.is_load_label = is_load_label
         self.get_second_sample = get_second_sample
-        self.is_bgr = False
+        self.is_bgr = True
 
         # assert len(set(keys_to_use) - set(all_keys)) == 0
         # Select keys
