@@ -1,3 +1,4 @@
+from cvxpy import entr
 import numpy as np
 import h5py
 from requests import head
@@ -193,6 +194,6 @@ class GazeDataset(Dataset):
                 entry['gaze_b'] = gaze_label
                 entry['head_b'] = head_label
 
-            return image, gaze_label
+            return entry
         else:
             return 
