@@ -7,21 +7,22 @@ from torch.utils.data import Dataset, DataLoader
 import os
 import json
 import random
+import cv2
 from typing import List
 
 trans_train = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.ToTensor(),  # this also convert pixel value from [0,255] to [0,1]
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225]),
+        #transforms.ToPILImage(),
+        #transforms.ToTensor(),  # this also convert pixel value from [0,255] to [0,1]
+        #transforms.Normalize(mean=[0.485, 0.456, 0.406],
+        #                     std=[0.229, 0.224, 0.225]),
         transforms.Resize(size=(128,128)),
     ])
 
 trans = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.ToTensor(),  # this also convert pixel value from [0,255] to [0,1]
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225]),
+        #transforms.ToPILImage(),
+        #transforms.ToTensor(),  # this also convert pixel value from [0,255] to [0,1]
+        #transforms.Normalize(mean=[0.485, 0.456, 0.406],
+        #                     std=[0.229, 0.224, 0.225]),
         transforms.Resize(size=(128,128)),
     ])
 
@@ -102,6 +103,7 @@ class GazeDataset(Dataset):
         self.sub_folder = sub_folder
         self.is_load_label = is_load_label
         self.get_second_sample = get_second_sample
+        self.is_bgr = False
 
         # assert len(set(keys_to_use) - set(all_keys)) == 0
         # Select keys
@@ -146,6 +148,25 @@ class GazeDataset(Dataset):
                 self.hdfs[num_i].close()
                 self.hdfs[num_i] = None
 
+    def preprocess_image(self, image):
+        if self.is_bgr:
+            ycrcb = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
+        else:
+            ycrcb = cv2.cvtColor(image, cv2.COLOR_RGB2YCrCb)
+        ycrcb[:, :, 0] = cv2.equalizeHist(ycrcb[:, :, 0])
+        image = cv2.cvtColor(ycrcb, cv2.COLOR_YCrCb2RGB)
+        image = np.transpose(image, [2, 0, 1])  # Colour image
+        image = 2.0 * image / 255.0 - 1
+        return image
+
+    def preprocess_entry(self, val):
+        if isinstance(val, np.ndarray):
+            val = torch.from_numpy(val.astype(np.float32))
+        elif isinstance(val, int):
+            # NOTE: maybe ints should be signed and 32-bits sometimes
+            val = torch.tensor(val, dtype=torch.long, requires_grad=False)
+        return val
+
     def __getitem__(self, idx):
         key, idx = self.idx_to_kv[idx]
 
@@ -154,7 +175,9 @@ class GazeDataset(Dataset):
 
         # Get face image
         image = self.hdf['face_patch'][idx, :]
-        image = image[:, :, [2, 1, 0]]  # from BGR to RGB
+        #image = image[:, :, [2, 1, 0]]  # from BGR to RGB
+        image = self.preprocess_image(image)
+        image = self.preprocess_entry(image)
         image = self.transform(image)
 
         # Get labels
@@ -180,7 +203,9 @@ class GazeDataset(Dataset):
                 # Grab 2nd entry from same person
                 # Get face image
                 image = self.hdf['face_patch'][idx_b, :]
-                image = image[:, :, [2, 1, 0]]  # from BGR to RGB
+                #image = image[:, :, [2, 1, 0]]  # from BGR to RGB
+                image = self.preprocess_image(image)
+                image = self.preprocess_entry(image)
                 image = self.transform(image)
 
                 gaze_label = self.hdf['face_gaze'][idx_b, :]

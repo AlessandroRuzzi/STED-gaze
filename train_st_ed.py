@@ -186,8 +186,8 @@ def execute_training_step(current_step):
         #print(input['image_a'].shape)
         #print(input['image_b'].shape)
         #print(generated.shape)
-        #img = np.concatenate([np.clip(((input['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((generated.detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
-        img = np.concatenate([(input['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy()* 255.0).astype(np.uint8),(input['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8),(generated.detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)],axis=2)
+        img = np.concatenate([np.clip(((input['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((generated.detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
+        #img = np.concatenate([(input['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy()* 255.0).astype(np.uint8),(input['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8),(generated.detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)],axis=2)
         img = Image.fromarray(img[0])
         log_image = wandb.Image(img)
         #log_image.show()
@@ -241,22 +241,22 @@ def execute_test(tag, data_dict):
             #    img = np.concatenate([((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255/2).astype(np.uint8)],axis=2)
             num_images += input_dict['image_b'].shape[0]
 
-            #image_gt = np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
-            #image_gen = np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
+            image_gt = np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
+            image_gen = np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
             #image_gt = (input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)
             #image_gen = (output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)
-            image_gt = input_dict['image_b']
-            image_gen = output_dict['image_b_hat']
+            #image_gt = input_dict['image_b']
+            #image_gen = output_dict['image_b_hat']
             for i in range(image_gt.shape[0]):
                 #print(i)
                 #print(image_gt[i,:].shape)
-                #image = trans(image_gt[i,:])
-                image = image_gt[i,:]
+                image = trans(image_gt[i,:])
+                #image = image_gt[i,:]
                 batch_images_norm = torch.reshape(image,(1,3,128,128)).to(device)
                 pitchyaw_gt = model(batch_images_norm)
 
-                #image = trans(image_gen[i,:])
-                image = image_gen[i,:]
+                image = trans(image_gen[i,:])
+                #image = image_gen[i,:]
                 batch_images_norm = torch.reshape(image,(1,3,128,128)).to(device)
                 pitchyaw_gen = model(batch_images_norm)
 
@@ -264,7 +264,7 @@ def execute_test(tag, data_dict):
                 #print(loss)
                 angular_loss += loss.detach().cpu().numpy()
 
-            img = np.concatenate([(input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8),(input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8),(output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)],axis=2)
+            img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
             img = Image.fromarray(img[0])
             log_image = wandb.Image(img)
 
