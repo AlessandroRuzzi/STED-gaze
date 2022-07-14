@@ -263,7 +263,7 @@ def execute_test(tag, data_dict):
                 loss = losses.gaze_angular_loss(pitchyaw_gt,pitchyaw_gen)
                 #print(loss)
                 angular_loss += loss.detach().cpu().numpy()
-            if index % 100 == 0:
+            if index % 4 == 0:
                 img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
                 img = Image.fromarray(img[0])
                 log_image = wandb.Image(img)
