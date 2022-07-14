@@ -44,7 +44,7 @@ def get_train_loader(data_dir,
     sub_folder_use = 'train'
     train_set = GazeDataset(dataset_path=data_dir, keys_to_use=datastore[sub_folder_use], sub_folder=sub_folder_use,
                             transform=trans, is_shuffle=is_shuffle, is_load_label=True)
-    train_loader = DataLoader(train_set, batch_size=batch_size, num_workers=num_workers)
+    train_loader = DataLoader(train_set, batch_size=batch_size, num_workers=num_workers,drop_last=True)
 
     return train_set,train_loader
 
@@ -66,7 +66,7 @@ def get_val_loader(data_dir,
     sub_folder_use = 'val'
     val_set = GazeDataset(dataset_path=data_dir, keys_to_use=datastore[sub_folder_use], sub_folder=sub_folder_use,
                             transform=trans, is_shuffle=is_shuffle, is_load_label=True)
-    val_loader = DataLoader(val_set, batch_size=batch_size, num_workers=num_workers)
+    val_loader = DataLoader(val_set, batch_size=batch_size, num_workers=num_workers,drop_last=True)
 
     return val_set, val_loader
 
