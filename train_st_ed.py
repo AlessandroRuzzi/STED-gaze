@@ -24,6 +24,7 @@ logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
 import wandb
 from PIL import Image
 from torchvision import transforms
+from xgaze_dataloader import get_train_loader,get_val_loader
 
 trans = transforms.Compose([
         transforms.ToPILImage(),
@@ -59,11 +60,12 @@ with open('./gazecapture_split.json', 'r') as f:
 if not config.skip_training:
     # Define single training dataset
     train_prefixes = all_gc_prefixes['train']
-    train_dataset = HDFDataset(hdf_file_path=config.xgaze_file,
+    #train_dataset = HDFDataset(hdf_file_path=config.xgaze_file,
                                #prefixes=train_prefixes,
-                               is_bgr=False,
-                               get_2nd_sample=True,
-                               num_labeled_samples=config.num_labeled_samples if config.semi_supervised else None)
+                               #is_bgr=False,
+                               #get_2nd_sample=True,
+                               #num_labeled_samples=config.num_labeled_samples if config.semi_supervised else None)
+    
     # Define multiple val/test datasets for evaluation during training
     for tag, hdf_file, is_bgr, prefixes in [
         #('gc/val', config.gazecapture_file, False, all_gc_prefixes['val']),
@@ -102,7 +104,7 @@ if not config.skip_training:
                                      pin_memory=True,
                                      ),
         }
-
+    """
     train_dataloader = DataLoader(train_dataset,
                                   batch_size=int(config.batch_size),
                                   shuffle=True,
@@ -110,6 +112,8 @@ if not config.skip_training:
                                   num_workers=config.num_data_loaders,
                                   pin_memory=True,
                                   )
+    """
+    train_dataset, train_dataloader = get_train_loader(data_dir = "/data/data2/aruzzi",batch_size=int(config.batch_size))
     all_data['gc/train'] = {'dataset': train_dataset, 'dataloader': train_dataloader}
 
     # Print some stats.
