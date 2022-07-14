@@ -183,9 +183,9 @@ class GazeDataset(Dataset):
         # Get labels
         if self.is_load_label:
             gaze_label = self.hdf['face_gaze'][idx, :]
-            gaze_label = gaze_label.astype(torch.float32)
+            gaze_label = gaze_label.astype(np.float32)
             head_label = self.hdf['face_head_pose'][idx, :]
-            head_label = head_label.astype(torch.float32)
+            head_label = head_label.astype(np.float32)
             entry = {
             'key': key,
             'image_a': image,
@@ -209,9 +209,9 @@ class GazeDataset(Dataset):
                 image = self.transform(image)
 
                 gaze_label = self.hdf['face_gaze'][idx_b, :]
-                gaze_label = gaze_label.astype(torch.float32)
+                gaze_label = gaze_label.astype(np.float32)
                 head_label = self.hdf['face_head_pose'][idx_b, :]
-                head_label = head_label.astype(torch.float32)
+                head_label = head_label.astype(np.float32)
 
 
                 entry['image_b'] = image
