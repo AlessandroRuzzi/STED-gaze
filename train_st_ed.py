@@ -230,7 +230,7 @@ def execute_test(tag, data_dict):
     num_images = 0
     with torch.no_grad():
         network.eval()
-        for input_dict in data_dict['dataloader']:
+        for index,input_dict in enumerate(data_dict['dataloader']):
             #print("here")
             input_dict = send_data_dict_to_gpu(input_dict, device)
             #img = Image.fromarray(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8)[0])
@@ -263,13 +263,13 @@ def execute_test(tag, data_dict):
                 loss = losses.gaze_angular_loss(pitchyaw_gt,pitchyaw_gen)
                 #print(loss)
                 angular_loss += loss.detach().cpu().numpy()
+            if index % 100 == 0:
+                img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
+                img = Image.fromarray(img[0])
+                log_image = wandb.Image(img)
 
-            img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
-            img = Image.fromarray(img[0])
-            log_image = wandb.Image(img)
-
-            #log_image.show()
-            wandb.log({"Test Prediction": log_image})
+                #log_image.show()
+                wandb.log({"Test Prediction": log_image})
             for key, value in loss_dict.items():
                 test_losses.add(key, value.detach().cpu().numpy())
     test_loss_means = test_losses.means()
