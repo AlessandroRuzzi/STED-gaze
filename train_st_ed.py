@@ -129,10 +129,10 @@ if not config.skip_training:
         logging.info('')
 
     # Have dataloader re-open HDF to avoid multi-processing related errors.
-    for tag, data_dict in all_data.items():
-        dataset = data_dict['dataset']
-        original_dataset = dataset.dataset if isinstance(dataset, Subset) else dataset
-        original_dataset.close_hdf()
+    #for tag, data_dict in all_data.items():
+    #    dataset = data_dict['dataset']
+    #    original_dataset = dataset.dataset if isinstance(dataset, Subset) else dataset
+    #    original_dataset.close_hdf()
 
 # Create redirection network
 network = STED().to(device)
