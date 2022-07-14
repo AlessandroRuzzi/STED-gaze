@@ -89,7 +89,7 @@ def get_test_loader(data_dir,
     sub_folder_use = 'test'
     test_set = GazeDataset(dataset_path=data_dir, keys_to_use=datastore[sub_folder_use], sub_folder=sub_folder_use,
                            transform=trans, is_shuffle=is_shuffle, is_load_label=False)
-    test_loader = DataLoader(test_set, batch_size=batch_size, num_workers=num_workers)
+    test_loader = DataLoader(test_set, batch_size=batch_size, num_workers=num_workers,drop_last=True)
 
     return test_loader
 
