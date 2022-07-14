@@ -1,4 +1,3 @@
-from cvxpy import entr
 import numpy as np
 import h5py
 from requests import head
