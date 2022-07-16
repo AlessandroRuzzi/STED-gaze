@@ -30,7 +30,8 @@ trans = transforms.Compose([
 def get_train_loader(data_dir,
                            batch_size,
                            num_workers=0,
-                           is_shuffle=True):
+                           is_shuffle=True,
+                           subject = None):
     # load dataset
     refer_list_file = 'train_test_split.json'
     print('load the train file list from: ', refer_list_file)
@@ -44,7 +45,7 @@ def get_train_loader(data_dir,
     # test_person_specific: evaluation subset for the person specific setting
     sub_folder_use = 'train'
     train_set = GazeDataset(dataset_path=data_dir, keys_to_use=datastore[sub_folder_use], sub_folder=sub_folder_use,
-                            transform=trans, is_shuffle=is_shuffle, is_load_label=True)
+                            transform=trans, is_shuffle=is_shuffle, is_load_label=True, subject=subject)
     train_loader = DataLoader(train_set, batch_size=batch_size, num_workers=num_workers,drop_last=True)
 
     return train_set,train_loader
@@ -52,7 +53,8 @@ def get_train_loader(data_dir,
 def get_val_loader(data_dir,
                            batch_size,
                            num_workers=0,
-                           is_shuffle=True):
+                           is_shuffle=True,
+                           subject = None):
     # load dataset
     refer_list_file = 'train_test_split.json'
     print('load the val file list from: ', refer_list_file)
@@ -66,7 +68,7 @@ def get_val_loader(data_dir,
     # test_person_specific: evaluation subset for the person specific setting
     sub_folder_use = 'val'
     val_set = GazeDataset(dataset_path=data_dir, keys_to_use=datastore[sub_folder_use], sub_folder=sub_folder_use,
-                            transform=trans, is_shuffle=is_shuffle, is_load_label=True)
+                            transform=trans, is_shuffle=is_shuffle, is_load_label=True,subject=subject)
     val_loader = DataLoader(val_set, batch_size=batch_size, num_workers=num_workers,drop_last=True)
 
     return val_set, val_loader
@@ -97,7 +99,7 @@ def get_test_loader(data_dir,
 
 class GazeDataset(Dataset):
     def __init__(self, dataset_path: str, keys_to_use: List[str] = None, sub_folder='', transform=None, is_shuffle=True,
-                 index_file=None, is_load_label=True, get_second_sample = True):
+                 index_file=None, is_load_label=True, get_second_sample = True, subject = None):
         self.path = dataset_path
         self.hdfs = {}
         self.sub_folder = sub_folder
@@ -108,7 +110,10 @@ class GazeDataset(Dataset):
         # assert len(set(keys_to_use) - set(all_keys)) == 0
         # Select keys
         # TODO: select only people with sufficient entries?
-        self.selected_keys = [k for k in keys_to_use]
+        if subject is None:
+            self.selected_keys = [k for k in keys_to_use]
+        else:
+            self.selected_keys = [subject]
         self.prefixes = keys_to_use
         assert len(self.selected_keys) > 0
 

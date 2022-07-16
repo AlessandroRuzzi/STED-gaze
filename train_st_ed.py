@@ -3,6 +3,7 @@
 # NVIDIA Source Code License (1-Way Commercial)
 # Code written by Seonwook Park, Shalini De Mello, Yufeng Zheng.
 # --------------------------------------------------------
+from dataclasses import is_dataclass
 import numpy as np
 from collections import OrderedDict
 import gc
@@ -11,6 +12,7 @@ import os
 import cv2
 import losses
 import torch
+import dlib
 import torch.nn as nn
 from torch.utils.data import DataLoader, Subset
 import logging
@@ -25,6 +27,7 @@ import wandb
 from PIL import Image
 from torchvision import transforms
 from xgaze_dataloader import get_train_loader,get_val_loader
+from xgaze_dataloader_nerf import get_val_loader_processed
 
 trans = transforms.Compose([
         transforms.ToPILImage(),
@@ -281,6 +284,138 @@ def execute_test(tag, data_dict):
         for k, v in test_loss_means.items():
             tensorboard.add_scalar('test/%s/%s' % (tag, k), v, current_step)
 
+def execute_test_new(tag, data_dict):
+    refer_list_file = "train_test_split.json"
+    # print("load the train file list from: ", refer_list_file)
+
+    with open(refer_list_file, "r") as f:
+        datastore = json.load(f)
+
+    val_keys = datastore["val"]
+
+    dataloader_new = get_val_loader_processed(
+            "/data/data2/aruzzi", 1, 390 ,0,is_shuffle = False, evaluate="target", index_file="evaluate_input.txt"
+        )
+    processed_dataloader_subjects = []
+
+    for subject in val_keys:
+        processed_dataloader_subjects.append(get_val_loader("/data/data2/aruzzi/train",1,is_shuffle=False, subject = subject))
+
+    test_losses = RunningStatistics()
+    path = "sted/checkpoints/epoch_24_ckpt_128.pth.tar"
+    model = gaze_network().to(device)
+    state_dict = torch.load(path, map_location=torch.device("cpu"))
+    #model.load_state_dict(state_dict=state_dict)
+    model.load_state_dict(state_dict=state_dict['model_state'])
+    model.eval()
+    print("Done")
+    angular_loss = 0.0
+    num_images = 0
+
+    for index, (
+                batch_images_1,
+                batch_head_mask_1,
+                batch_eye_mask_1,
+                batch_nl3dmm_para_dict_1,
+                ldms_1,
+                cam_ind_1,
+                idx_1,
+                key_1,
+                batch_images_2,
+                batch_head_mask_2,
+                batch_eye_mask_2,
+                batch_nl3dmm_para_dict_2,
+                ldms_2,
+                cam_ind_2,
+                idx_2,
+                key_2,
+            ) in enumerate(dataloader_new):
+            print(index)
+            face_detector = dlib.get_frontal_face_detector()
+            detected_faces = face_detector((batch_images_1.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0], 1)
+            detected_faces_target = face_detector((batch_images_2.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0], 1)
+            if len(detected_faces) == 0 or len(detected_faces_target) == 0:
+                print('warning: no detected face')
+                continue
+            if len(torch.unique(batch_eye_mask_1)) == 1:
+                    print("No eye mask detected")
+                    continue
+            with torch.no_grad():
+                network.eval()
+                counter_images = 0
+                for i,i_dict in enumerate(processed_dataloader_subjects[key_1]):
+                    if i % 18 in [11, 12, 13, 14, 15]:
+                        continue
+                    else:
+                        if idx_1 == counter_images:
+                            input_dict = i_dict
+                            break
+                        counter_images+=1
+
+                counter_images = 0
+                for i,i_dict in enumerate(processed_dataloader_subjects[key_1]):
+                    if i % 18 in [11, 12, 13, 14, 15]:
+                        continue
+                    else:
+                        if idx_2 == counter_images:
+                            target_dict = i_dict
+                            break
+                        counter_images+=1
+
+                input_dict['image_b'] = target_dict['image_a']
+                input_dict['gaze_b'] = target_dict['gaze_a']
+                input_dict['head_b'] = target_dict['head_a']
+
+                #print("here")
+                input_dict = send_data_dict_to_gpu(input_dict, device)
+                #img = Image.fromarray(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8)[0])
+                #img.show()
+                output_dict, loss_dict = network(input_dict)
+                #print(output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()[0].shape)
+                #if tag == 'xgaze':
+                #    img = np.concatenate([((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255/2).astype(np.uint8)],axis=2)
+                num_images += input_dict['image_b'].shape[0]
+                print(num_images)
+                image_gt = np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
+                image_gen = np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
+                #image_gt = (input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)
+                #image_gen = (output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)
+                #image_gt = input_dict['image_b']
+                #image_gen = output_dict['image_b_hat']
+                for i in range(image_gt.shape[0]):
+                    #print(i)
+                    #print(image_gt[i,:].shape)
+                    image = trans(image_gt[i,:])
+                    #image = image_gt[i,:]
+                    batch_images_norm = torch.reshape(image,(1,3,128,128)).to(device)
+                    pitchyaw_gt = model(batch_images_norm)
+
+                    image = trans(image_gen[i,:])
+                    #image = image_gen[i,:]
+                    batch_images_norm = torch.reshape(image,(1,3,128,128)).to(device)
+                    pitchyaw_gen = model(batch_images_norm)
+
+                    loss = losses.gaze_angular_loss(pitchyaw_gt,pitchyaw_gen)
+                    #print(loss)
+                    angular_loss += loss.detach().cpu().numpy()
+                if index % 1 == 0:
+                    img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
+                    img = Image.fromarray(img[0])
+                    log_image = wandb.Image(img)
+
+                    #log_image.show()
+                    wandb.log({"Test Prediction": log_image})
+                for key, value in loss_dict.items():
+                    test_losses.add(key, value.detach().cpu().numpy())
+    test_loss_means = test_losses.means()
+    logging.info('Test Losses at [%7d] for %10s: %s' %
+                 (current_step, '[' + tag + ']',
+                  ', '.join(['%s: %.6f' % v for v in test_loss_means.items()])))
+    wandb.log({'angular loss': angular_loss/num_images})
+    if config.use_tensorboard:
+        for k, v in test_loss_means.items():
+            tensorboard.add_scalar('test/%s/%s' % (tag, k), v, current_step)
+
 
 def execute_visualize(data):
     output_dict, losses_dict = network(test_visualize)
@@ -322,7 +457,7 @@ if not config.skip_training:
             network.clean_up()
             torch.cuda.empty_cache()
             for tag, data_dict in list(all_data.items())[:-1]:
-                execute_test(tag, data_dict)
+                execute_test_new(tag, data_dict)
                 # This might help with memory leaks
                 torch.cuda.empty_cache()
         # Visualization loop
@@ -411,7 +546,7 @@ if config.compute_full_result:
     network.eval()
     torch.cuda.empty_cache()
     for tag, data_dict in list(all_data.items()):
-        execute_test(tag, data_dict)
+        execute_test_new(tag, data_dict)
     if config.use_tensorboard:
         tensorboard.close()
         del tensorboard
