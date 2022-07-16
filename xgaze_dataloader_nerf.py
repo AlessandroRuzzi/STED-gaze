@@ -41,7 +41,7 @@ def get_train_loader(
     """
 
     # load dataset
-    refer_list_file = os.path.join("data/eth_xgaze", "train_test_split.json")
+    refer_list_file = "train_test_split.json"
     print("load the train file list from: ", refer_list_file)
 
     with open(refer_list_file, "r") as f:
@@ -79,7 +79,7 @@ def get_val_loader_processed(
     """
 
     # load dataset
-    refer_list_file = os.path.join("data/eth_xgaze", "train_test_split.json")
+    refer_list_file = "train_test_split.json"
     print("load the val file list from: ", refer_list_file)
 
     with open(refer_list_file, "r") as f:
@@ -116,7 +116,7 @@ def get_test_loader(data_dir, batch_size, num_workers=4, is_shuffle=True, subjec
     """
 
     # load dataset
-    refer_list_file = os.path.join("data/eth_xgaze", "train_test_split.json")
+    refer_list_file = "train_test_split.json"
     print("load the train file list from: ", refer_list_file)
 
     with open(refer_list_file, "r") as f:
