@@ -196,9 +196,9 @@ class GazeDataset(Dataset):
                 self.idx_to_kv += [(num_i, i) for i in range(n)]
         else:
             print("load the file: ", "configs/config_files/evaluation_input.txt")
-            self.idx_to_kv = np.loadtxt("configs/config_files/evaluation_input.txt", dtype=np.int)
+            self.idx_to_kv = np.loadtxt("evaluation_input.txt", dtype=np.int)
             print("load the file: ", "configs/config_files/evaluation_target.txt")
-            self.target_idx = np.loadtxt("configs/config_files/evaluation_target.txt", dtype=np.int)
+            self.target_idx = np.loadtxt("evaluation_target.txt", dtype=np.int)
 
         for num_i in range(0, len(self.hdfs)):
             if self.hdfs[num_i]:
