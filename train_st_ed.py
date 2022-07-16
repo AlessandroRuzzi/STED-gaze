@@ -299,7 +299,9 @@ def execute_test_new(tag, data_dict):
     processed_dataloader_subjects = []
 
     for subject in val_keys:
-        processed_dataloader_subjects.append(get_val_loader("/data/data2/aruzzi/train",1,is_shuffle=False, subject = subject))
+        processed_dataloader_subjects.append(get_val_loader("/data/data2/aruzzi/train",1,shuffle=False,
+                                     num_workers=config.num_data_loaders, 
+                                     pin_memory=True, subject = subject))
 
     test_losses = RunningStatistics()
     path = "sted/checkpoints/epoch_24_ckpt_128.pth.tar"
@@ -350,6 +352,7 @@ def execute_test_new(tag, data_dict):
                         continue
                     else:
                         if idx_1 == counter_images:
+                            print("here")
                             input_dict = i_dict
                             break
                         counter_images+=1
@@ -361,6 +364,7 @@ def execute_test_new(tag, data_dict):
                         continue
                     else:
                         if idx_2 == counter_images:
+                            print("here")
                             target_dict = i_dict
                             break
                         counter_images+=1
