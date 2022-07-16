@@ -343,6 +343,7 @@ def execute_test_new(tag, data_dict):
             with torch.no_grad():
                 network.eval()
                 counter_images = 0
+                print(idx_1,idx_2)
                 for i,i_dict in enumerate(processed_dataloader_subjects[key_1]):
                     print(i)
                     if i % 18 in [11, 12, 13, 14, 15]:
