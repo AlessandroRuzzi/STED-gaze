@@ -299,9 +299,7 @@ def execute_test_new(tag, data_dict):
     processed_dataloader_subjects = []
 
     for subject in val_keys:
-        dataset,dataloader = get_val_loader("/data/data2/aruzzi/train",1,is_shuffle=False,
-                                     num_workers=config.num_data_loaders, 
-                                     pin_memory=True, subject = subject)
+        dataset,dataloader = get_val_loader("/data/data2/aruzzi/train",1,is_shuffle=False, subject = subject)
         processed_dataloader_subjects.append(dataloader)
 
     test_losses = RunningStatistics()
