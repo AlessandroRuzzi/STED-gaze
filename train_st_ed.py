@@ -332,12 +332,14 @@ def execute_test_new(tag, data_dict):
                 key_2,
             ) in enumerate(dataloader_new):
             print(index)
+            """
             face_detector = dlib.get_frontal_face_detector()
             detected_faces = face_detector((batch_images_1.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0], 1)
             detected_faces_target = face_detector((batch_images_2.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0], 1)
             if len(detected_faces) == 0 or len(detected_faces_target) == 0:
                 print('warning: no detected face')
                 continue
+            """
             if len(torch.unique(batch_eye_mask_1)) == 1:
                     print("No eye mask detected")
                     continue
