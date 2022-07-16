@@ -299,9 +299,10 @@ def execute_test_new(tag, data_dict):
     processed_dataloader_subjects = []
 
     for subject in val_keys:
-        processed_dataloader_subjects.append(get_val_loader("/data/data2/aruzzi/train",1,shuffle=False,
+        dataset,dataloader = get_val_loader("/data/data2/aruzzi/train",1,is_shuffle=False,
                                      num_workers=config.num_data_loaders, 
-                                     pin_memory=True, subject = subject))
+                                     pin_memory=True, subject = subject)
+        processed_dataloader_subjects.append(dataloader)
 
     test_losses = RunningStatistics()
     path = "sted/checkpoints/epoch_24_ckpt_128.pth.tar"
@@ -347,19 +348,16 @@ def execute_test_new(tag, data_dict):
                 counter_images = 0
                 print(idx_1,idx_2)
                 for i,i_dict in enumerate(processed_dataloader_subjects[key_1]):
-                    print(i)
                     if i % 18 in [11, 12, 13, 14, 15]:
                         continue
                     else:
                         if idx_1 == counter_images:
-                            print("here")
                             input_dict = i_dict
                             break
                         counter_images+=1
 
                 counter_images = 0
                 for i,i_dict in enumerate(processed_dataloader_subjects[key_1]):
-                    print(i)
                     if i % 18 in [11, 12, 13, 14, 15]:
                         continue
                     else:
