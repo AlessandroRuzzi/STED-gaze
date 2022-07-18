@@ -77,6 +77,6 @@ class CheckpointsManager(object):
         fname = ckpt_fmtstring % step_number
         if not os.path.isdir(self.output_dir):
             os.makedirs(self.output_dir)
-        ofpath = '%s/%s_%s' % (self.output_dir, fname,"reduced")
+        ofpath = '%s/%s_reduced' % (self.output_dir, fname)
         torch.save(self.network.state_dict(), ofpath)
         torch.cuda.empty_cache()
