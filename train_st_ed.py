@@ -460,7 +460,7 @@ if not config.skip_training:
             network.clean_up()
             torch.cuda.empty_cache()
             for tag, data_dict in list(all_data.items())[:-1]:
-                execute_test_new(tag, data_dict)
+                execute_test(tag, data_dict)
                 # This might help with memory leaks
                 torch.cuda.empty_cache()
         # Visualization loop
