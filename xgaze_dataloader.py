@@ -126,9 +126,9 @@ class GazeDataset(Dataset):
         # Construct mapping from full-data index to key and person-specific index
         if index_file is None:
             self.idx_to_kv = []
-            #for num_i in range(0, len(self.selected_keys)):
-            for num_i in range(0, 540):
-                n = self.hdfs[num_i]["face_patch"].shape[0]
+            for num_i in range(0, len(self.selected_keys)):
+                #n = self.hdfs[num_i]["face_patch"].shape[0]
+                n = 540
                 self.idx_to_kv += [(num_i, i) for i in range(n)]
         else:
             print('load the file: ', index_file)
