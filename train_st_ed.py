@@ -153,6 +153,7 @@ del saver
 
 if config.load_step != 0:
     load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '.pt'),device)
+    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_reduced.pt'),device)
     logging.info("Loaded checkpoints from step " + str(config.load_step))
 
 # Transfer on the GPU before constructing and optimizer
