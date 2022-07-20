@@ -398,6 +398,8 @@ def execute_test_new(tag, data_dict):
                 #image_gen = (output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)
                 #image_gt = input_dict['image_b']
                 #image_gen = output_dict['image_b_hat']
+                print(image_gt)
+                print(image_gen)
                 for i in range(image_gt.shape[0]):
                     #print(i)
                     #print(image_gt[i,:].shape)
