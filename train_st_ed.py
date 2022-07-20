@@ -21,6 +21,7 @@ from utils import save_images, worker_init_fn, send_data_dict_to_gpu, recover_im
     adjust_learning_rate, script_init_common, get_example_images, save_model, load_model
 from core import DefaultConfig
 from models.xgaze_baseline import gaze_network
+from models.xgaze_baseline_head import gaze_network_head
 from models import STED
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
 import wandb
@@ -315,8 +316,10 @@ def execute_test_new(tag, data_dict):
         processed_dataloader_subjects.append(dataloader)
 
     test_losses = RunningStatistics()
-    path = "sted/checkpoints/epoch_24_ckpt_128.pth.tar"
-    model = gaze_network().to(device)
+    #path = "sted/checkpoints/epoch_24_ckpt_128.pth.tar"
+    #model = gaze_network().to(device)
+    path = "sted/checkpoints/epoch_24_head_ckpt.pth.tar"
+    model = gaze_network_head().to(device)
     state_dict = torch.load(path, map_location=torch.device("cpu"))
     #model.load_state_dict(state_dict=state_dict)
     model.load_state_dict(state_dict=state_dict['model_state'])
@@ -324,6 +327,7 @@ def execute_test_new(tag, data_dict):
     print("Done")
 
     angular_loss = 0.0
+    angular_head_loss = 0.0
     ssim_loss = 0.0
     psnr_loss = 0.0
     lpips_loss = 0.0
@@ -412,17 +416,21 @@ def execute_test_new(tag, data_dict):
                     image = trans(image_gt[i,:])
                     #image = image_gt[i,:]
                     batch_images_norm_gt = torch.reshape(image,(1,3,128,128)).to(device)
-                    pitchyaw_gt = model(batch_images_norm_gt)
+                    pitchyaw_gt, head_gt = model(batch_images_norm_gt)
 
                     pred_normalized = torch.reshape(trans_eval(image_gen[i,:]),(1,3,128,128)).to(device)
                     image = trans(image_gen[i,:])
                     #image = image_gen[i,:]
                     batch_images_norm_pred = torch.reshape(image,(1,3,128,128)).to(device)
-                    pitchyaw_gen = model(batch_images_norm_pred)
+                    pitchyaw_gen, head_gen = model(batch_images_norm_pred)
 
                     loss = losses.gaze_angular_loss(pitchyaw_gt,pitchyaw_gen)
                     angular_loss += loss.detach().cpu().numpy()
                     print(angular_loss/num_images,loss.detach().cpu().numpy(),num_images)
+
+                    loss = losses.gaze_angular_loss(head_gt,head_gen).detach().cpu().numpy()
+                    angular_head_loss += loss
+                    print(angular_head_loss/num_images,loss,num_images)
 
                     loss = ssim(target_normalized, pred_normalized, data_range=1.).detach().cpu().numpy()
                     ssim_loss += loss
@@ -471,6 +479,7 @@ def execute_test_new(tag, data_dict):
 
 
     print(angular_loss/num_images)
+    print(angular_head_loss/num_images)
     print(ssim_loss/num_images)
     print(psnr_loss/num_images)
     print(lpips_loss/num_images)
@@ -480,7 +489,7 @@ def execute_test_new(tag, data_dict):
     print(blur_loss/num_images)
 
 
-    wandb.log({"angular error" : angular_loss/num_images, "SSIM": ssim_loss/num_images, "PSNR" : psnr_loss/num_images,
+    wandb.log({"angular error" : angular_loss/num_images,"angular head error" : angular_head_loss/num_images, "SSIM": ssim_loss/num_images, "PSNR" : psnr_loss/num_images,
                    "LPIPS": lpips_loss/num_images, "DISTS: " : dists_loss/num_images, "L1 Distance: " : l1_loss/num_images, "L2 Distance: " : l2_loss/num_images, "Image Blurriness: " : blur_loss/num_images})
     if config.use_tensorboard:
         for k, v in test_loss_means.items():
