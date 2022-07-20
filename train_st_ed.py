@@ -424,9 +424,9 @@ def execute_test_new(tag, data_dict):
                     batch_images_norm_pred = torch.reshape(image,(1,3,128,128)).to(device)
                     pitchyaw_gen, head_gen = model(batch_images_norm_pred)
 
-                    loss = losses.gaze_angular_loss(pitchyaw_gt,pitchyaw_gen)
-                    angular_loss += loss.detach().cpu().numpy()
-                    print("Gaze Angular Error: ",angular_loss/num_images,loss.detach().cpu().numpy(),num_images)
+                    loss = losses.gaze_angular_loss(pitchyaw_gt,pitchyaw_gen).detach().cpu().numpy()
+                    angular_loss += loss
+                    print("Gaze Angular Error: ",angular_loss/num_images,loss,num_images)
 
                     loss = losses.gaze_angular_loss(head_gt,head_gen).detach().cpu().numpy()
                     angular_head_loss += loss
