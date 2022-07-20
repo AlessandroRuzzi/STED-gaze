@@ -426,11 +426,11 @@ def execute_test_new(tag, data_dict):
 
                     loss = losses.gaze_angular_loss(pitchyaw_gt,pitchyaw_gen)
                     angular_loss += loss.detach().cpu().numpy()
-                    print(angular_loss/num_images,loss.detach().cpu().numpy(),num_images)
+                    print("Gaze Angular Error: ",angular_loss/num_images,loss.detach().cpu().numpy(),num_images)
 
                     loss = losses.gaze_angular_loss(head_gt,head_gen).detach().cpu().numpy()
                     angular_head_loss += loss
-                    print(angular_head_loss/num_images,loss,num_images)
+                    print("Head Angular Error: ",angular_head_loss/num_images,loss,num_images)
 
                     loss = ssim(target_normalized, pred_normalized, data_range=1.).detach().cpu().numpy()
                     ssim_loss += loss
