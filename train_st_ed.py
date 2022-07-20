@@ -28,6 +28,8 @@ from PIL import Image
 from torchvision import transforms
 from xgaze_dataloader import get_train_loader,get_val_loader
 from xgaze_dataloader_nerf import get_val_loader_processed
+from piq import ssim, SSIMLoss, psnr, LPIPS,DISTS
+import torch.nn.functional as F
 
 trans = transforms.Compose([
         transforms.ToPILImage(),
@@ -152,8 +154,8 @@ _ = saver.load_last_checkpoint()
 del saver
 
 if config.load_step != 0:
-    #load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '.pt'),device)
-    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_reduced.pt'),device)
+    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '.pt'),device)
+    #load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_reduced.pt'),device)
     logging.info("Loaded checkpoints from step " + str(config.load_step))
 
 # Transfer on the GPU before constructing and optimizer
@@ -285,6 +287,9 @@ def execute_test(tag, data_dict):
         for k, v in test_loss_means.items():
             tensorboard.add_scalar('test/%s/%s' % (tag, k), v, current_step)
 
+def variance_of_laplacian(image):
+    return cv2.Laplacian(image,cv2.CV_64F).var()
+
 def execute_test_new(tag, data_dict):
     refer_list_file = "train_test_split.json"
     # print("load the train file list from: ", refer_list_file)
@@ -311,7 +316,15 @@ def execute_test_new(tag, data_dict):
     model.load_state_dict(state_dict=state_dict['model_state'])
     model.eval()
     print("Done")
+
     angular_loss = 0.0
+    ssim_loss = 0.0
+    psnr_loss = 0.0
+    lpips_loss = 0.0
+    dists_loss = 0.0
+    l1_loss = 0.0
+    l2_loss = 0.0
+    blur_loss = 0.0
     num_images = 0
 
     for index, (
@@ -390,18 +403,53 @@ def execute_test_new(tag, data_dict):
                     #print(image_gt[i,:].shape)
                     image = trans(image_gt[i,:])
                     #image = image_gt[i,:]
-                    batch_images_norm = torch.reshape(image,(1,3,128,128)).to(device)
-                    pitchyaw_gt = model(batch_images_norm)
+                    batch_images_norm_gt = torch.reshape(image,(1,3,128,128)).to(device)
+                    pitchyaw_gt = model(batch_images_norm_gt)
 
                     image = trans(image_gen[i,:])
                     #image = image_gen[i,:]
-                    batch_images_norm = torch.reshape(image,(1,3,128,128)).to(device)
-                    pitchyaw_gen = model(batch_images_norm)
+                    batch_images_norm_pred = torch.reshape(image,(1,3,128,128)).to(device)
+                    pitchyaw_gen = model(batch_images_norm_pred)
 
                     loss = losses.gaze_angular_loss(pitchyaw_gt,pitchyaw_gen)
                     #print(loss)
                     angular_loss += loss.detach().cpu().numpy()
                     print(angular_loss/num_images,loss.detach().cpu().numpy(),num_images)
+
+                    target_normalized = batch_images_norm_gt
+                    pred_normalized = batch_images_norm_pred
+
+                    loss = ssim(target_normalized, pred_normalized, data_range=1.).detach().cpu().numpy()
+                    ssim_loss += loss
+                    print("SSIM: ",ssim_loss/num_images,loss,num_images)
+
+                    loss = psnr(target_normalized, pred_normalized, data_range=1.).detach().cpu().numpy()
+                    psnr_loss += loss
+                    print("PSNR: ",psnr_loss/num_images,loss,num_images)
+
+                    lpips_metric = LPIPS()
+                    loss = lpips_metric(target_normalized, pred_normalized).detach().cpu().numpy()
+                    lpips_loss += loss
+                    print("LPIPS: ",lpips_loss/num_images,loss,num_images)
+
+                    dists_metric = DISTS()
+                    loss = dists_metric(target_normalized, pred_normalized).detach().cpu().numpy()
+                    dists_loss += loss
+                    print("DISTS: ",dists_loss/num_images,loss,num_images)
+
+                    loss = torch.nn.functional.l1_loss(target_normalized, pred_normalized).detach().cpu().numpy()
+                    l1_loss += loss
+                    print("L1 Distance: ", l1_loss/num_images,loss, num_images)
+
+                    loss = F.mse_loss(target_normalized, pred_normalized).detach().cpu().numpy()
+                    l2_loss += loss
+                    print("L2 Distance: ", l2_loss/num_images,loss, num_images)
+
+                    gray_pred = cv2.cvtColor((pred_normalized.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0], cv2.COLOR_BGR2GRAY)
+                    loss = variance_of_laplacian(gray_pred)
+                    blur_loss += loss
+                    print("Image Blurriness: ", blur_loss/num_images, loss, num_images)
+
                 if index % 1 == 0:
                     img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
                     img = Image.fromarray(img[0])
@@ -415,7 +463,20 @@ def execute_test_new(tag, data_dict):
     logging.info('Test Losses at [%7d] for %10s: %s' %
                  (current_step, '[' + tag + ']',
                   ', '.join(['%s: %.6f' % v for v in test_loss_means.items()])))
-    wandb.log({'angular loss': angular_loss/num_images})
+
+
+    print(angular_loss/num_images)
+    print(ssim_loss/num_images)
+    print(psnr_loss/num_images)
+    print(lpips_loss/num_images)
+    print(dists_loss/num_images)
+    print(l1_loss/num_images)
+    print(l2_loss/num_images)
+    print(blur_loss/num_images)
+
+
+    wandb.log({"angular error" : angular_loss/num_images, "SSIM": ssim_loss/num_images, "PSNR" : psnr_loss/num_images,
+                   "LPIPS": lpips_loss/num_images, "DISTS: " : dists_loss/num_images, "L1 Distance: " : l1_loss/num_images, "L2 Distance: " : l2_loss/num_images, "Image Blurriness: " : blur_loss/num_images})
     if config.use_tensorboard:
         for k, v in test_loss_means.items():
             tensorboard.add_scalar('test/%s/%s' % (tag, k), v, current_step)
