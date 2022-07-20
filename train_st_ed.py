@@ -39,6 +39,12 @@ trans = transforms.Compose([
         #transforms.Resize(size=(128,128)),
     ])
 
+trans_eval = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.ToTensor(),  # this also convert pixel value from [0,255] to [0,1]
+        #transforms.Resize(size=(128,128)),
+    ])
+
 # Set Configurations
 config = DefaultConfig()
 wandb.init(project="sted evalaution", config={"gpu_id": 0})
@@ -398,31 +404,25 @@ def execute_test_new(tag, data_dict):
                 #image_gen = (output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)
                 #image_gt = input_dict['image_b']
                 #image_gen = output_dict['image_b_hat']
-                print(image_gt)
-                print(image_gen)
+
                 for i in range(image_gt.shape[0]):
                     #print(i)
                     #print(image_gt[i,:].shape)
+                    target_normalized = torch.reshape(trans_eval(image_gt[i,:]),(1,3,128,128)).to(device)
                     image = trans(image_gt[i,:])
                     #image = image_gt[i,:]
                     batch_images_norm_gt = torch.reshape(image,(1,3,128,128)).to(device)
                     pitchyaw_gt = model(batch_images_norm_gt)
 
+                    pred_normalized = torch.reshape(trans_eval(image_gen[i,:]),(1,3,128,128)).to(device)
                     image = trans(image_gen[i,:])
                     #image = image_gen[i,:]
                     batch_images_norm_pred = torch.reshape(image,(1,3,128,128)).to(device)
                     pitchyaw_gen = model(batch_images_norm_pred)
 
                     loss = losses.gaze_angular_loss(pitchyaw_gt,pitchyaw_gen)
-                    #print(loss)
                     angular_loss += loss.detach().cpu().numpy()
                     print(angular_loss/num_images,loss.detach().cpu().numpy(),num_images)
-
-                    target_normalized = batch_images_norm_gt
-                    pred_normalized = batch_images_norm_pred
-
-                    print(target_normalized)
-                    print(pred_normalized)
 
                     loss = ssim(target_normalized, pred_normalized, data_range=1.).detach().cpu().numpy()
                     ssim_loss += loss
