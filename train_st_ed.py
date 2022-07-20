@@ -419,6 +419,9 @@ def execute_test_new(tag, data_dict):
                     target_normalized = batch_images_norm_gt
                     pred_normalized = batch_images_norm_pred
 
+                    print(target_normalized)
+                    print(pred_normalized)
+
                     loss = ssim(target_normalized, pred_normalized, data_range=1.).detach().cpu().numpy()
                     ssim_loss += loss
                     print("SSIM: ",ssim_loss/num_images,loss,num_images)
