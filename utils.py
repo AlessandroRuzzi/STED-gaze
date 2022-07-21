@@ -182,8 +182,8 @@ def save_model(network, current_step):
         'discriminator': network.discriminator.state_dict(),
     }
     p = os.path.join(config.save_path, "checkpoints")
-    path = os.path.join(p, str(current_step) + '.pt')
-    #path = os.path.join(p, str(current_step) + '_reduced.pt')
+    #path = os.path.join(p, str(current_step) + '.pt')
+    path = os.path.join(p, str(current_step) + '_reduced.pt')
     if not os.path.exists(p):
         os.makedirs(p)
     torch.save(models, path)
