@@ -133,7 +133,7 @@ class GazeDataset(Dataset):
                     n= 180
                 else:
                     n = 540
-                if self.subject == None:
+                if subject == None:
                     self.idx_to_kv += [(num_i, i) for i in range(n) if i % 18 not in [11, 12, 13, 14, 15]]
                 else:
                     self.idx_to_kv += [(num_i, i) for i in range(n)]
