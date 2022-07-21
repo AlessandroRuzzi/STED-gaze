@@ -434,7 +434,9 @@ def execute_test_new(tag, data_dict):
                     #print(image_gt[i,:].shape)
                     image_white = image_gt[i,:]
                     print(white_mask_c3b)
+                    print(image_white)
                     image_white[white_mask_c3b] = 255
+                    print(image_white)
                     target_normalized = torch.reshape(trans_eval(image_white),(1,3,128,128)).to(device)
                     image = trans(image_white)
                     #image = image_gt[i,:]
