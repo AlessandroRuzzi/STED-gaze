@@ -128,8 +128,15 @@ class GazeDataset(Dataset):
             self.idx_to_kv = []
             for num_i in range(0, len(self.selected_keys)):
                 #n = self.hdfs[num_i]["face_patch"].shape[0]
-                n = 540
-                self.idx_to_kv += [(num_i, i) for i in range(n)]
+                if self.selected_keys[num_i] in ["subject0003.h5","subject0004.h5","subject0005.h5","subject0006.h5","subject0007.h5","subject0008.h5","subject0009.h5",
+                "subject0010.h5","subject0013.h5","subject0014.h5"]:
+                    n= 180
+                else:
+                    n = 540
+                if self.subject == None:
+                    self.idx_to_kv += [(num_i, i) for i in range(n) if i % 18 not in [11, 12, 13, 14, 15]]
+                else:
+                    self.idx_to_kv += [(num_i, i) for i in range(n)]
         else:
             print('load the file: ', index_file)
             self.idx_to_kv = np.loadtxt(index_file, dtype=np.int)

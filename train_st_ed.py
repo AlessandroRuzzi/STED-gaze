@@ -298,7 +298,7 @@ def execute_test(tag, data_dict):
 def variance_of_laplacian(image):
     return cv2.Laplacian(image,cv2.CV_64F).var()
 
-def execute_test_new(tag, data_dict):
+def execute_test_new(tag, data_dict,log):
     cam_matrix = []
     cam_distortion = []
     face_model_load =  np.loadtxt('data/eth_xgaze/face_model.txt')  # Generic face model with 3D facial landmarks
@@ -483,7 +483,7 @@ def execute_test_new(tag, data_dict):
                     blur_loss += loss
                     print("Image Blurriness: ", blur_loss/num_images, loss, num_images)
 
-                if index % 1 == 0:
+                if index % log == 0:
                     img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),(torch.reshape(image_white,(1,3,128,128)).detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8), (torch.reshape(image_tmp,(1,3,128,128)).detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)],axis=2)
                     img = Image.fromarray(img[0])
                     log_image = wandb.Image(img)
@@ -556,7 +556,7 @@ if not config.skip_training:
             network.clean_up()
             torch.cuda.empty_cache()
             for tag, data_dict in list(all_data.items())[:-1]:
-                execute_test(tag, data_dict)
+                execute_test_new(tag, data_dict,20)
                 # This might help with memory leaks
                 torch.cuda.empty_cache()
         # Visualization loop
@@ -645,7 +645,7 @@ if config.compute_full_result:
     network.eval()
     torch.cuda.empty_cache()
     for tag, data_dict in list(all_data.items()):
-        execute_test_new(tag, data_dict)
+        execute_test_new(tag, data_dict,1)
     if config.use_tensorboard:
         tensorboard.close()
         del tensorboard
