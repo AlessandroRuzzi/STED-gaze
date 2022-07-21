@@ -382,7 +382,7 @@ def execute_test_new(tag, data_dict):
             batch_images_norm = normalize((batch_images.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0], cam_matrix[cam_ind], cam_distortion[cam_ind], face_model_load,ldms,224)
             batch_images_norm = trans_eval(batch_images_norm)
             white_mask = (batch_images_norm == 1.0).all(axis=0)
-            white_mask_c3b = white_mask.expand(3, -1, -1)
+            white_mask_c3b = np.transpose(white_mask.expand(3, -1, -1),(1,2,0))
 
             if len(torch.unique(batch_eye_mask_1)) == 1:
                     print("No eye mask detected")
