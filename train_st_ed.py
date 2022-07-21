@@ -432,9 +432,10 @@ def execute_test_new(tag, data_dict):
                 for i in range(image_gt.shape[0]):
                     #print(i)
                     #print(image_gt[i,:].shape)
-                    image_white = image_gt[i,:]
+                    image_white = torch.reshape(image_gt[i,:],(1,3,128,128))
                     print(image_white)
-                    #image_white[white_mask_c3b] = 255
+                    image_white[0,white_mask_c3b] = 255
+                    image_white = torch.reshape(image_white,(128,128,3))
                     print(image_white)
                     target_normalized = torch.reshape(trans_eval(image_white),(1,3,128,128)).to(device)
                     image = trans(image_white)
@@ -488,15 +489,15 @@ def execute_test_new(tag, data_dict):
                     print("Image Blurriness: ", blur_loss/num_images, loss, num_images)
 
                 if index % 1 == 0:
-                    #img_white = np.reshape(image_white,(1,128,128,3))
-                    target_normalized[0,white_mask_c3b] = 1.0
-                    img_white = (target_normalized.detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)
+                    img_white = np.reshape(image_white,(1,128,128,3))
+                    #target_normalized[0,white_mask_c3b] = 1.0
+                    #img_white = (target_normalized.detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)
                     print(img_white)
                     img = Image.fromarray(img_white[0])
                     log_image = wandb.Image(img)
-                    #img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),img_white, np.reshape(white_mask_c3b*255,(1,128,128,3)),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
-                    #img = Image.fromarray(img[0])
-                    #log_image = wandb.Image(img)
+                    img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),img_white, np.reshape(white_mask_c3b*255,(1,128,128,3)),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
+                    img = Image.fromarray(img[0])
+                    log_image = wandb.Image(img)
 
                     #log_image.show()
                     wandb.log({"Test Prediction": log_image})
