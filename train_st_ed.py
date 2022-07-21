@@ -31,6 +31,7 @@ from xgaze_dataloader import get_train_loader,get_val_loader
 from xgaze_dataloader_nerf import get_val_loader_processed
 from piq import ssim, SSIMLoss, psnr, LPIPS,DISTS
 import torch.nn.functional as F
+from gaze_estimation_utils import normalize
 
 trans = transforms.Compose([
         transforms.ToPILImage(),
@@ -298,6 +299,17 @@ def variance_of_laplacian(image):
     return cv2.Laplacian(image,cv2.CV_64F).var()
 
 def execute_test_new(tag, data_dict):
+    cam_matrix = []
+    cam_distortion = []
+    face_model_load =  np.loadtxt('data/eth_xgaze/face_model.txt')  # Generic face model with 3D facial landmarks
+
+    for cam_id in range(18):
+        cam_file_name = 'data/eth_xgaze/cam/cam' + str(cam_id).zfill(2) + '.xml'
+        fs = cv2.FileStorage(cam_file_name, cv2.FILE_STORAGE_READ)
+        cam_matrix.append(fs.getNode('Camera_Matrix').mat())
+        cam_distortion.append(fs.getNode('Distortion_Coefficients').mat())
+        fs.release()
+
     refer_list_file = "train_test_split.json"
     # print("load the train file list from: ", refer_list_file)
 
@@ -356,14 +368,23 @@ def execute_test_new(tag, data_dict):
                 key_2,
             ) in enumerate(dataloader_new):
             print(index)
-            """
-            face_detector = dlib.get_frontal_face_detector()
-            detected_faces = face_detector((batch_images_1.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0], 1)
-            detected_faces_target = face_detector((batch_images_2.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0], 1)
-            if len(detected_faces) == 0 or len(detected_faces_target) == 0:
-                print('warning: no detected face')
-                continue
-            """
+            ldms = ldms_2[0]
+            batch_head_mask = torch.reshape(batch_head_mask_2,(1,1,512,512))
+            batch_images = batch_images_2
+            cam_ind = cam_ind_2
+            batch_eye_mask =  batch_eye_mask_2
+            batch_nl3dmm_para_dict = batch_nl3dmm_para_dict_2
+            nonhead_mask = batch_head_mask < 0.5
+            nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)
+            head_mask = batch_head_mask >= 0.5
+            head_mask_c3b = head_mask.expand(-1, 3, -1, -1)
+            batch_images[nonhead_mask_c3b] = 1.0
+            batch_images_norm = normalize((batch_images.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0], cam_matrix[cam_ind], cam_distortion[cam_ind], face_model_load,ldms,224)
+            white_mask = (batch_images_norm == 255).all(axis=2)
+            print(white_mask.shape)
+            white_mask_c3b = white_mask.expand(3, -1, -1)
+            print(batch_images_norm)
+
             if len(torch.unique(batch_eye_mask_1)) == 1:
                     print("No eye mask detected")
                     continue
@@ -412,8 +433,10 @@ def execute_test_new(tag, data_dict):
                 for i in range(image_gt.shape[0]):
                     #print(i)
                     #print(image_gt[i,:].shape)
-                    target_normalized = torch.reshape(trans_eval(image_gt[i,:]),(1,3,128,128)).to(device)
-                    image = trans(image_gt[i,:])
+                    image_white = image_gt[i,:]
+                    image_white[white_mask] = 255
+                    target_normalized = torch.reshape(trans_eval(image_white),(1,3,128,128)).to(device)
+                    image = trans(image_white)
                     #image = image_gt[i,:]
                     batch_images_norm_gt = torch.reshape(image,(1,3,128,128)).to(device)
                     pitchyaw_gt, head_gt = model(batch_images_norm_gt)
