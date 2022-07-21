@@ -432,7 +432,7 @@ def execute_test_new(tag, data_dict):
                 for i in range(image_gt.shape[0]):
                     #print(i)
                     #print(image_gt[i,:].shape)
-                    image_white = trans_eval(image_white)
+                    image_white = trans_eval(image_gt[i,:])
                     print(image_white)
                     image_white[white_mask_c3b] = 1.0
                     #image_white = torch.reshape(image_white,(128,128,3))
