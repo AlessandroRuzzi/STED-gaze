@@ -443,8 +443,9 @@ def execute_test_new(tag, data_dict):
                     batch_images_norm_gt = torch.reshape(image,(1,3,128,128)).to(device)
                     pitchyaw_gt, head_gt = model(batch_images_norm_gt)
 
-                    pred_normalized = torch.reshape(trans_eval(image_gen[i,:]),(1,3,128,128)).to(device)
-                    image = trans(image_gen[i,:])
+                    image_tmp = trans_eval(image_gen[i,:])
+                    pred_normalized = torch.reshape(image_tmp,(1,3,128,128)).to(device)
+                    image = trans(image_tmp)
                     #image = image_gen[i,:]
                     batch_images_norm_pred = torch.reshape(image,(1,3,128,128)).to(device)
                     pitchyaw_gen, head_gen = model(batch_images_norm_pred)
