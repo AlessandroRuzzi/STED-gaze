@@ -434,7 +434,7 @@ def execute_test_new(tag, data_dict):
                     #print(image_gt[i,:].shape)
                     image_white = image_gt[i,:]
                     print(image_white)
-                    image_white[white_mask_c3b] = 255
+                    #image_white[white_mask_c3b] = 255
                     print(image_white)
                     target_normalized = torch.reshape(trans_eval(image_white),(1,3,128,128)).to(device)
                     image = trans(image_white)
@@ -489,6 +489,7 @@ def execute_test_new(tag, data_dict):
 
                 if index % 1 == 0:
                     #img_white = np.reshape(image_white,(1,128,128,3))
+                    target_normalized[white_mask_c3b] = 1.0
                     img_white = (target_normalized.detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)
                     print(img_white)
                     img = Image.fromarray(img_white[0])
