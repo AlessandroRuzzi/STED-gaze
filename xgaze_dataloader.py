@@ -133,6 +133,7 @@ class GazeDataset(Dataset):
                     n= 180
                 else:
                     n = 540
+                n = self.hdfs[num_i]["face_patch"].shape[0]
                 if subject == None:
                     self.idx_to_kv += [(num_i, i) for i in range(n) if i % 18 not in [11, 12, 13, 14, 15]]
                 else:
