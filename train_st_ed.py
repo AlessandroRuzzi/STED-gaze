@@ -489,7 +489,7 @@ def execute_test_new(tag, data_dict):
 
                 if index % 1 == 0:
                     #img_white = np.reshape(image_white,(1,128,128,3))
-                    target_normalized[white_mask_c3b] = 1.0
+                    target_normalized[0,white_mask_c3b] = 1.0
                     img_white = (target_normalized.detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)
                     print(img_white)
                     img = Image.fromarray(img_white[0])
