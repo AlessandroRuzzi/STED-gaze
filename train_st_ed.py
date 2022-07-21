@@ -44,7 +44,7 @@ trans = transforms.Compose([
 trans_eval = transforms.Compose([
         transforms.ToPILImage(),
         transforms.ToTensor(),  # this also convert pixel value from [0,255] to [0,1]
-        #transforms.Resize(size=(128,128)),
+        transforms.Resize(size=(128,128)),
     ])
 
 # Set Configurations
@@ -380,7 +380,8 @@ def execute_test_new(tag, data_dict):
             head_mask_c3b = head_mask.expand(-1, 3, -1, -1)
             batch_images[nonhead_mask_c3b] = 1.0
             batch_images_norm = normalize((batch_images.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0], cam_matrix[cam_ind], cam_distortion[cam_ind], face_model_load,ldms,224)
-            white_mask = (batch_images_norm == 255).all(axis=2)
+            batch_images_norm = trans_eval(batch_images_norm)
+            white_mask = (batch_images_norm == 1.0).all(axis=2)
             print(white_mask.shape)
             white_mask_c3b = white_mask.expand(3, -1, -1)
             print(batch_images_norm)
@@ -487,7 +488,7 @@ def execute_test_new(tag, data_dict):
                     print("Image Blurriness: ", blur_loss/num_images, loss, num_images)
 
                 if index % 1 == 0:
-                    img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
+                    img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),torch.reshape(image_white,(1,3,128,128)),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
                     img = Image.fromarray(img[0])
                     log_image = wandb.Image(img)
 
