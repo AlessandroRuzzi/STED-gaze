@@ -34,7 +34,7 @@
     "base_learning_rate": 0.00005,
     "use_apex": false,
     "compute_full_result": true,
-    "load_step": 400000,
+    "load_step": 190000,
     "store_redirect_dataset": false,
     "semi_supervised":false
 }
