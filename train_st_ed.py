@@ -435,7 +435,7 @@ def execute_test_new(tag, data_dict):
                     #print(i)
                     #print(image_gt[i,:].shape)
                     image_white = image_gt[i,:]
-                    image_white[white_mask] = 255
+                    image_white[white_mask_c3b] = 255
                     target_normalized = torch.reshape(trans_eval(image_white),(1,3,128,128)).to(device)
                     image = trans(image_white)
                     #image = image_gt[i,:]
@@ -488,7 +488,7 @@ def execute_test_new(tag, data_dict):
                     print("Image Blurriness: ", blur_loss/num_images, loss, num_images)
 
                 if index % 1 == 0:
-                    img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),torch.reshape(image_white,(1,3,128,128)),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
+                    img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.reshape(image_white,(1,3,128,128)),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
                     img = Image.fromarray(img[0])
                     log_image = wandb.Image(img)
 
