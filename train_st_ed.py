@@ -34,8 +34,8 @@ import torch.nn.functional as F
 from gaze_estimation_utils import normalize
 
 trans = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.ToTensor(),  # this also convert pixel value from [0,255] to [0,1]
+        #transforms.ToPILImage(),
+        #transforms.ToTensor(),  # this also convert pixel value from [0,255] to [0,1]
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
                              std=[0.229, 0.224, 0.225]),
         #transforms.Resize(size=(128,128)),
@@ -432,12 +432,12 @@ def execute_test_new(tag, data_dict):
                 for i in range(image_gt.shape[0]):
                     #print(i)
                     #print(image_gt[i,:].shape)
-                    image_white = torch.reshape(image_gt[i,:],(1,3,128,128))
+                    image_white = trans_eval(image_white)
                     print(image_white)
-                    image_white[0,white_mask_c3b] = 255
-                    image_white = torch.reshape(image_white,(128,128,3))
+                    image_white[white_mask_c3b] = 1.0
+                    #image_white = torch.reshape(image_white,(128,128,3))
                     print(image_white)
-                    target_normalized = torch.reshape(trans_eval(image_white),(1,3,128,128)).to(device)
+                    target_normalized = torch.reshape(image_white,(1,3,128,128)).to(device)
                     image = trans(image_white)
                     #image = image_gt[i,:]
                     batch_images_norm_gt = torch.reshape(image,(1,3,128,128)).to(device)
@@ -489,13 +489,7 @@ def execute_test_new(tag, data_dict):
                     print("Image Blurriness: ", blur_loss/num_images, loss, num_images)
 
                 if index % 1 == 0:
-                    img_white = np.reshape(image_white,(1,128,128,3))
-                    #target_normalized[0,white_mask_c3b] = 1.0
-                    #img_white = (target_normalized.detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)
-                    print(img_white)
-                    img = Image.fromarray(img_white[0])
-                    log_image = wandb.Image(img)
-                    img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),img_white, np.reshape(white_mask_c3b*255,(1,128,128,3)),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
+                    img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),(torch.reshape(image_white,(1,3,128,128)).detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8), np.reshape(white_mask_c3b*255,(1,128,128,3)),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
                     img = Image.fromarray(img[0])
                     log_image = wandb.Image(img)
 
