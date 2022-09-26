@@ -66,8 +66,8 @@ class DefaultConfig(object):
     gazecapture_file = '.'
     xgaze_file = '.'
     xgaze_val_file = '.'
-    data_names = [],
-    img_dir = [],
+    data_names = ["eth_xgaze"],
+    img_dir = ["/data/data2/aruzzi/train"],
     img_dim = 224,
     num_images = 100,
     save_path = '.'
