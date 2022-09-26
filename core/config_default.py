@@ -67,6 +67,7 @@ class DefaultConfig(object):
     xgaze_file = '.'
     xgaze_val_file = '.'
     data_names = list(["eth_xgaze"]),
+    print(data_names)
     img_dir = list(["/data/data2/aruzzi/train"]),
     img_dim = 224,
     num_images = 100,
