@@ -117,15 +117,9 @@ def log_evaluation_image(batch_images_norm_pre, target_normalized_log, batch_ima
 
     res_img = np.concatenate(
         [
-            (
-                batch_images_1.detach().cpu().permute(0, 2, 3, 1).numpy() * 255
-            ).astype(np.uint8),
-            (
-                np.transpose(np.reshape(batch_images_2,(1,3,128,128)),(0, 2, 3, 1))
-            ).astype(np.uint8),
-            (   np.transpose(np.reshape(pred,(1,3,128,128)),(0, 2, 3, 1))).astype(
-                np.uint8
-            )
+            batch_images_1,
+            batch_images_2,
+            pred,
         ],
         axis=2,
     )

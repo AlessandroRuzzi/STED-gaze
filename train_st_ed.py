@@ -365,6 +365,7 @@ def execute_test(log, current_step):
         num_images = 0
 
         for index,entry in enumerate(dataloader):
+            print(index)
             ldms = entry["ldms_b"][0]
             batch_head_mask = torch.reshape(entry["mask_b"], (1, 1, 512, 512))
             cam_ind = entry["cam_ind_b"]
@@ -374,10 +375,10 @@ def execute_test(log, current_step):
             input_dict = send_data_dict_to_gpu(entry, device)
             output_dict, loss_dict = network(input_dict)
 
-            image_gt = np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)[0,:]
-            image_gen = np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)[0,:]
+            image_gt = np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
+            image_gen = np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
 
-            batch_images_gt = trans_normalize(image_gt)
+            batch_images_gt = trans_normalize(image_gt[0,:])
             nonhead_mask = batch_head_mask < 0.5
             nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)
             batch_images_gt_white = torch.reshape(batch_images_gt,(1,3,512,512))
@@ -399,7 +400,7 @@ def execute_test(log, current_step):
             pitchyaw_gt, head_gt = model(batch_images_norm_gt)
 
 
-            batch_images_gen = trans_normalize(image_gen)
+            batch_images_gen = trans_normalize(image_gen[0,:])
             nonhead_mask = batch_head_mask < 0.5
             nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)
             batch_images_gen_white = torch.reshape(batch_images_gen,(1,3,512,512))
@@ -471,7 +472,7 @@ def execute_test(log, current_step):
             print("Image Blurriness: ", blur_loss/num_images, loss, num_images)
 
             if index % log == 0:
-                log_evaluation_image(pred_normalized, target_normalized, entry['image_a'], image_gt, image_gen)
+                log_evaluation_image(pred_normalized, target_normalized, np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8), image_gt, image_gen)
 
         if index % log == 0:
             log_one_subject_evaluation_results(current_step,angular_loss, angular_head_loss, ssim_loss, psnr_loss, lpips_loss, dists_loss, l1_loss, l2_loss, blur_loss, num_images )
