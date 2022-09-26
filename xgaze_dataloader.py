@@ -220,7 +220,7 @@ class GazeDataset(Dataset):
             'head_a': head_label,
         }
             if self.get_second_sample:
-                all_indices = [i for i in range(self.n) if i % 18 not in [11, 12, 14, 15]]
+                all_indices = [i for i in range(self.n) if (i % 18 not in [11, 12, 14, 15] and i != idx)]
                 if len(all_indices) == 1:
                     # If there is only one sample for this person, just return the same sample.
                     idx_b = idx
@@ -233,8 +233,7 @@ class GazeDataset(Dataset):
                                 break
                             counter_images+=1
                 elif self.sub_folder != 'val':
-                    all_indices_but_a = np.delete(all_indices, idx)
-                    idx_b = np.random.choice(all_indices_but_a)
+                    idx_b = np.random.choice(all_indices)
                     counter_images = 0
                     for i in range(self.n):
                         if i % 18 in [11, 12, 14, 15]:
