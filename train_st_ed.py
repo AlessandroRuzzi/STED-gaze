@@ -363,9 +363,10 @@ def execute_test(log, current_step):
         num_images = 0
 
         for index,entry in enumerate(dataloader):
-            ldms = entry["ldms_b"][0]
+            print(entry)
+            ldms = entry[0]["ldms_b"][0]
             batch_head_mask = torch.reshape(entry["mask_b"], (1, 1, 512, 512))
-            cam_ind = entry["cam_ind_b"]
+            cam_ind = entry[0]["cam_ind_b"]
 
             camera_matrix, camera_distortion = select_cam_matrix(name, cam_matrix,cam_distortion, cam_ind, subject)
 
