@@ -73,7 +73,7 @@ def get_val_loader(data_dir,
                             transform=trans, is_shuffle=is_shuffle, is_load_label=True,subject=subject, num_val_images = num_val_images)
     val_loader = DataLoader(val_set, batch_size=batch_size, num_workers=num_workers,drop_last=True)
 
-    return val_set, val_loader
+    return val_loader
 
 
 def get_test_loader(data_dir,
