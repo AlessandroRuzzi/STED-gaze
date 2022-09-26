@@ -169,7 +169,7 @@ class GazeDataset(Dataset):
             ycrcb = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
         else:
             ycrcb = cv2.cvtColor(image, cv2.COLOR_RGB2YCrCb)
-        ycrcb[:, :, 0] = cv2.equalizeHist(ycrcb[:, :, 0])
+        #ycrcb[:, :, 0] = cv2.equalizeHist(ycrcb[:, :, 0])
         image = cv2.cvtColor(ycrcb, cv2.COLOR_YCrCb2RGB)
         image = np.transpose(image, [2, 0, 1])  # Colour image
         image = 2.0 * image / 255.0 - 1
