@@ -66,9 +66,8 @@ class DefaultConfig(object):
     gazecapture_file = '.'
     xgaze_file = '.'
     xgaze_val_file = '.'
-    data_names = list(["eth_xgaze"]),
-    print(data_names)
-    img_dir = list(["/data/data2/aruzzi/train"]),
+    data_names = []
+    img_dir = []
     img_dim = 224,
     num_images = 100,
     save_path = '.'
@@ -122,12 +121,9 @@ class DefaultConfig(object):
         """Import a set of key-value pairs from a dict to over-write existing config entries."""
         self.__class__.__immutable = False
         for key, value in dictionary.items():
-            print(key,value)
             if strict is True:
                 if not hasattr(self, key):
                     raise ValueError('Unknown configuration key: ' + key)
-                print(getattr(self, key))
-                print(type(getattr(self, key)), type(value))
                 assert type(getattr(self, key)) is type(value)
                 if not isinstance(getattr(DefaultConfig, key), property):
                     setattr(self, key, value)
