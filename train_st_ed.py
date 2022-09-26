@@ -517,10 +517,9 @@ if not config.skip_training:
             network.eval()
             network.clean_up()
             torch.cuda.empty_cache()
-            for tag, data_dict in list(all_data.items())[:-1]:
-                execute_test(1, current_step)
-                # This might help with memory leaks
-                torch.cuda.empty_cache()
+            execute_test(1, current_step)
+            # This might help with memory leaks
+            torch.cuda.empty_cache()
         # Visualization loop
         """
         if (current_step != 0 and current_step % config.save_freq_images == 0) or current_step == config.num_training_steps - 1:
