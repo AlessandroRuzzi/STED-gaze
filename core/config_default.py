@@ -68,8 +68,8 @@ class DefaultConfig(object):
     xgaze_val_file = '.'
     data_names = []
     img_dir = []
-    img_dim = 224,
-    num_images = 100,
+    img_dim = 224
+    num_images = 100
     save_path = '.'
     gazenet_savepath = '.'
     eval_gazenet_savepath = '.'
