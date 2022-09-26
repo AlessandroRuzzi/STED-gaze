@@ -472,7 +472,7 @@ def execute_test(log, current_step):
             print("Image Blurriness: ", blur_loss/num_images, loss, num_images)
 
             if index % log == 0:
-                log_evaluation_image(pred_normalized, target_normalized, ((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0).astype(np.uint8), image_gt, image_gen)
+                log_evaluation_image(pred_normalized, target_normalized, (entry['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() *255).astype(np.uint8), image_gt, image_gen)
 
         if index % log == 0:
             log_one_subject_evaluation_results(current_step,angular_loss, angular_head_loss, ssim_loss, psnr_loss, lpips_loss, dists_loss, l1_loss, l2_loss, blur_loss, num_images )
