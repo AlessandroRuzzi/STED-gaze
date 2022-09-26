@@ -106,8 +106,8 @@ def log_one_image(img_tensor, pred_dict):
 def log_evaluation_image(batch_images_norm_pre, target_normalized_log, batch_images_1, batch_images_2, pred):
     res_img = np.concatenate(
                     [
-                        target_normalized_log.detach().cpu().reshape(1, 128, 128, 3),
-                        batch_images_norm_pre.detach().cpu().reshape(1, 128, 128, 3),
+                        (target_normalized_log.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8),
+                        (batch_images_norm_pre.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8),
                     ],
                     axis=2,
                 )
