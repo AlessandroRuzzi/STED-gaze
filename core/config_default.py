@@ -125,6 +125,7 @@ class DefaultConfig(object):
             if strict is True:
                 if not hasattr(self, key):
                     raise ValueError('Unknown configuration key: ' + key)
+                print(getattr(self, key))
                 print(type(getattr(self, key)), type(value))
                 assert type(getattr(self, key)) is type(value)
                 if not isinstance(getattr(DefaultConfig, key), property):
