@@ -121,6 +121,7 @@ class DefaultConfig(object):
         """Import a set of key-value pairs from a dict to over-write existing config entries."""
         self.__class__.__immutable = False
         for key, value in dictionary.items():
+            print(key,value)
             if strict is True:
                 if not hasattr(self, key):
                     raise ValueError('Unknown configuration key: ' + key)
