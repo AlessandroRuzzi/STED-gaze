@@ -208,7 +208,7 @@ def execute_training_step(current_step):
         #print(input['image_a'].shape)
         #print(input['image_b'].shape)
         #print(generated.shape)
-        img = np.concatenate([np.clip(((input['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((generated.detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
+        img = np.concatenate([((input['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0).astype(np.uint8),((input['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0).astype(np.uint8),np.clip(((generated.detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
         #img = np.concatenate([(input['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy()* 255.0).astype(np.uint8),(input['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8),(generated.detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)],axis=2)
         img = Image.fromarray(img[0])
         log_image = wandb.Image(img)
@@ -516,7 +516,7 @@ if not config.skip_training:
             if config.use_tensorboard:
                 tensorboard.add_scalar('train/lr', lr, current_step)
         # Testing loop: every specified iterations compute the test statistics
-        if current_step % config.print_freq_test == 0:# and current_step != 0:
+        if current_step % config.print_freq_test == 0 and current_step != 0:
             network.eval()
             network.clean_up()
             torch.cuda.empty_cache()
