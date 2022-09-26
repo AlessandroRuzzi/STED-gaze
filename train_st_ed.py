@@ -12,8 +12,8 @@ import os
 import cv2
 import losses
 import torch
-import dlib
 import torch.nn as nn
+import random
 from torch.utils.data import DataLoader, Subset
 import logging
 from dataset import HDFDataset
@@ -54,7 +54,18 @@ trans_normalize = transforms.Compose([
         transforms.ToTensor(), 
         transforms.Resize(size=(512,512)),
     ])
+torch.manual_seed(45)  # cpu
+torch.cuda.manual_seed(55)  # gpu
+np.random.seed(65)  # numpy
+random.seed(75)  # random and transforms
+torch.backends.cudnn.deterministic = True  # cudnn
+torch.backends.cudnn.benchmark = True
+torch.backends.cuda.matmul.allow_tf32 = False
+torch.backends.cudnn.allow_tf32 = False
 
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+torch.set_num_threads(1)
 # Set Configurations
 config = DefaultConfig()
 wandb.init(project="sted evalaution", config={"gpu_id": 0})
