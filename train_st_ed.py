@@ -375,7 +375,7 @@ def execute_test(log, current_step):
             input_dict = send_data_dict_to_gpu(entry, device)
             output_dict, loss_dict = network(input_dict)
 
-            image_gt = np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
+            image_gt = ((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0).astype(np.uint8)
             image_gen = np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
 
             batch_images_gt = trans_normalize(image_gt[0,:])
@@ -472,7 +472,7 @@ def execute_test(log, current_step):
             print("Image Blurriness: ", blur_loss/num_images, loss, num_images)
 
             if index % log == 0:
-                log_evaluation_image(pred_normalized, target_normalized, np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8), image_gt, image_gen)
+                log_evaluation_image(pred_normalized, target_normalized, ((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0).astype(np.uint8), image_gt, image_gen)
 
         if index % log == 0:
             log_one_subject_evaluation_results(current_step,angular_loss, angular_head_loss, ssim_loss, psnr_loss, lpips_loss, dists_loss, l1_loss, l2_loss, blur_loss, num_images )
@@ -516,7 +516,7 @@ if not config.skip_training:
             if config.use_tensorboard:
                 tensorboard.add_scalar('train/lr', lr, current_step)
         # Testing loop: every specified iterations compute the test statistics
-        if current_step % config.print_freq_test == 0:
+        if current_step % config.print_freq_test == 0:# and current_step != 0:
             network.eval()
             network.clean_up()
             torch.cuda.empty_cache()
