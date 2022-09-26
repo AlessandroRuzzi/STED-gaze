@@ -243,7 +243,7 @@ class GazeDataset(Dataset):
                                 break
                             counter_images+=1
                 elif self.sub_folder == 'val':
-                    counter_images = [self.target_idx[idx]]
+                    counter_images = self.target_idx[idx]
 
                     idx_b = 0
                     counter_images_tmp = 0
