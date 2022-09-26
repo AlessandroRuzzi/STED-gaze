@@ -11,10 +11,17 @@ import random
 import cv2
 from typing import List
 
+trans_train = transforms.Compose([
+        #transforms.ToPILImage(),
+        #transforms.ToTensor(),  # this also convert pixel value from [0,255] to [0,1]
+        #transforms.Normalize(mean=[0.485, 0.456, 0.406],
+        #                     std=[0.229, 0.224, 0.225]),
+        transforms.Resize(size=(128,128)),
+    ])
 
 trans = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.ToTensor(),  # this also convert pixel value from [0,255] to [0,1]
+        #transforms.ToPILImage(),
+        #transforms.ToTensor(),  # this also convert pixel value from [0,255] to [0,1]
         #transforms.Normalize(mean=[0.485, 0.456, 0.406],
         #                     std=[0.229, 0.224, 0.225]),
         transforms.Resize(size=(128,128)),
@@ -165,7 +172,7 @@ class GazeDataset(Dataset):
         #ycrcb[:, :, 0] = cv2.equalizeHist(ycrcb[:, :, 0])
         image = cv2.cvtColor(ycrcb, cv2.COLOR_YCrCb2RGB)
         image = np.transpose(image, [2, 0, 1])  # Colour image
-        #image = 2.0 * image / 255.0 - 1
+        image = 2.0 * image / 255.0 - 1
         return image
 
     def preprocess_entry(self, val):
@@ -195,9 +202,9 @@ class GazeDataset(Dataset):
 
         # Get face image
         image = self.hdf_nerf['face_patch'][counter_images, :]
-        image = image[:, :, [2, 1, 0]]  # from BGR to RGB
-        #image = self.preprocess_image(image)
-        #image = self.preprocess_entry(image)
+        #image = image[:, :, [2, 1, 0]]  # from BGR to RGB
+        image = self.preprocess_image(image)
+        image = self.preprocess_entry(image)
         image = self.transform(image)
 
         # Get labels
@@ -253,9 +260,9 @@ class GazeDataset(Dataset):
                 # Grab 2nd entry from same person
                 # Get face image
                 image = self.hdf_nerf['face_patch'][counter_images, :]
-                image = image[:, :, [2, 1, 0]]  # from BGR to RGB
-                #image = self.preprocess_image(image)
-                #image = self.preprocess_entry(image)
+                #image = image[:, :, [2, 1, 0]]  # from BGR to RGB
+                image = self.preprocess_image(image)
+                image = self.preprocess_entry(image)
                 image = self.transform(image)
 
                 gaze_label = self.hdf_nerf["pitchyaw_head"][counter_images, :]
