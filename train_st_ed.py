@@ -375,7 +375,7 @@ def execute_test(log, current_step):
             input_dict = send_data_dict_to_gpu(entry, device)
             output_dict, loss_dict = network(input_dict)
 
-            image_gt = ((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0).astype(np.uint8)
+            image_gt = (input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)
             image_gen = np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
 
             batch_images_gt = trans_normalize(image_gt[0,:])
