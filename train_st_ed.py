@@ -415,7 +415,7 @@ def execute_test(log, current_step):
             nonhead_mask = batch_head_mask < 0.5
             nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)
             batch_images_gen_white = torch.reshape(batch_images_gen,(1,3,512,512))
-            batch_images_gt_white[nonhead_mask_c3b] = 1.0
+            batch_images_gen_white[nonhead_mask_c3b] = 1.0
             batch_images_gen_norm = normalize(
                 (batch_images_gen_white.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(
                     np.uint8
