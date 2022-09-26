@@ -50,6 +50,8 @@ trans_eval = transforms.Compose([
     ])
 
 trans_normalize = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.ToTensor(), 
         transforms.Resize(size=(512,512)),
     ])
 
