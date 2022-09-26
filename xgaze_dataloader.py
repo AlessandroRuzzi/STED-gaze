@@ -1,3 +1,4 @@
+from itertools import count
 import numpy as np
 import h5py
 from requests import head
@@ -33,7 +34,7 @@ def get_train_loader(data_dir,
                            is_shuffle=True,
                            subject = None):
     # load dataset
-    refer_list_file = 'train_test_split.json'
+    refer_list_file = 'data/eth_xgaze/train_test_split.json'
     print('load the train file list from: ', refer_list_file)
 
     with open(refer_list_file, 'r') as f:
@@ -52,11 +53,12 @@ def get_train_loader(data_dir,
 
 def get_val_loader(data_dir,
                            batch_size,
+                           num_val_images,
                            num_workers=0,
                            is_shuffle=True,
                            subject = None):
     # load dataset
-    refer_list_file = 'train_test_split.json'
+    refer_list_file = 'data/eth_xgaze/train_test_split.json'
     print('load the val file list from: ', refer_list_file)
 
     with open(refer_list_file, 'r') as f:
@@ -68,7 +70,7 @@ def get_val_loader(data_dir,
     # test_person_specific: evaluation subset for the person specific setting
     sub_folder_use = 'val'
     val_set = GazeDataset(dataset_path=data_dir, keys_to_use=datastore[sub_folder_use], sub_folder=sub_folder_use,
-                            transform=trans, is_shuffle=is_shuffle, is_load_label=True,subject=subject)
+                            transform=trans, is_shuffle=is_shuffle, is_load_label=True,subject=subject, num_val_images = num_val_images)
     val_loader = DataLoader(val_set, batch_size=batch_size, num_workers=num_workers,drop_last=True)
 
     return val_set, val_loader
@@ -99,7 +101,7 @@ def get_test_loader(data_dir,
 
 class GazeDataset(Dataset):
     def __init__(self, dataset_path: str, keys_to_use: List[str] = None, sub_folder='', transform=None, is_shuffle=True,
-                 index_file=None, is_load_label=True, get_second_sample = True, subject = None):
+                 index_file=None, is_load_label=True, get_second_sample = True, subject = None, num_val_images=100):
         self.path = dataset_path
         self.hdfs = {}
         self.sub_folder = sub_folder
@@ -127,15 +129,13 @@ class GazeDataset(Dataset):
         if index_file is None:
             self.idx_to_kv = []
             for num_i in range(0, len(self.selected_keys)):
-                #n = self.hdfs[num_i]["face_patch"].shape[0]
-                if self.selected_keys[num_i] in ["subject0003.h5","subject0004.h5","subject0005.h5","subject0006.h5","subject0007.h5","subject0008.h5","subject0009.h5",
-                "subject0010.h5","subject0013.h5","subject0014.h5"]:
-                    n= 180
+                if sub_folder == "val":
+                    n = num_val_images
                 else:
-                    n = 540
-                n = self.hdfs[num_i]["face_patch"].shape[0]
+                    n= 360
+                    #n = self.hdfs[num_i]["face_patch"].shape[0]
                 if subject == None:
-                    self.idx_to_kv += [(num_i, i) for i in range(n) if i % 18 not in [11, 12, 13, 14, 15]]
+                    self.idx_to_kv += [(num_i, i) for i in range(n) if i % 18 not in [11, 12, 14, 15]]
                 else:
                     self.idx_to_kv += [(num_i, i) for i in range(n)]
         else:
@@ -152,6 +152,8 @@ class GazeDataset(Dataset):
 
         self.hdf = None
         self.transform = transform
+        self.n = n
+        self.target_idx = np.loadtxt("evaluation_target_single_subject.txt", dtype=np.int)
 
     def __len__(self):
         return len(self.idx_to_kv)
@@ -185,10 +187,21 @@ class GazeDataset(Dataset):
         key, idx = self.idx_to_kv[idx]
 
         self.hdf = h5py.File(os.path.join(self.path, self.selected_keys[key]), 'r', swmr=True)
+
+        self.hdf_nerf = h5py.File(os.path.join("/data/data2/aruzzi/subjects_partial", self.selected_keys[key]), 'r', swmr=True) #TODO check the path
         assert self.hdf.swmr_mode
 
+        counter_images = 0
+        for i in range(self.n):
+            if i % 18 in [11, 12, 14, 15]:
+                continue
+            else:
+                if idx == i:
+                    break
+                counter_images+=1
+
         # Get face image
-        image = self.hdf['face_patch'][idx, :]
+        image = self.hdf_nerf['face_patch'][counter_images, :]
         #image = image[:, :, [2, 1, 0]]  # from BGR to RGB
         image = self.preprocess_image(image)
         image = self.preprocess_entry(image)
@@ -196,7 +209,7 @@ class GazeDataset(Dataset):
 
         # Get labels
         if self.is_load_label:
-            gaze_label = self.hdf['face_gaze'][idx, :]
+            gaze_label = self.hdf_nerf["pitchyaw_head"][counter_images, :]
             gaze_label = gaze_label.astype(np.float32)
             head_label = self.hdf['face_head_pose'][idx, :]
             head_label = head_label.astype(np.float32)
@@ -207,30 +220,68 @@ class GazeDataset(Dataset):
             'head_a': head_label,
         }
             if self.get_second_sample:
-                all_indices = list(range(self.hdf['face_patch'].shape[0]))
+                all_indices = [i for i in range(self.n) if i % 18 not in [11, 12, 14, 15]]
                 if len(all_indices) == 1:
                     # If there is only one sample for this person, just return the same sample.
                     idx_b = idx
-                else:
+                    counter_images = 0
+                    for i in range(self.n):
+                        if i % 18 in [11, 12, 14, 15]:
+                            continue
+                        else:
+                            if idx_b == i:
+                                break
+                            counter_images+=1
+                elif self.sub_folder != 'val':
                     all_indices_but_a = np.delete(all_indices, idx)
                     idx_b = np.random.choice(all_indices_but_a)
+                    counter_images = 0
+                    for i in range(self.n):
+                        if i % 18 in [11, 12, 14, 15]:
+                            continue
+                        else:
+                            if idx_b == i:
+                                break
+                            counter_images+=1
+                elif self.sub_folder == 'val':
+                    counter_images = [self.target_idx[idx]]
+
+                    idx_b = 0
+                    counter_images_tmp = 0
+                    for i in range(self.n):
+                        if i % 18 in [11, 12, 14, 15]:
+                            continue
+                        else:
+                            if counter_images == counter_images_tmp:
+                                idx_b = i
+                                break
+                            counter_images_tmp+=1
+
+                
                 # Grab 2nd entry from same person
                 # Get face image
-                image = self.hdf['face_patch'][idx_b, :]
+                image = self.hdf_nerf['face_patch'][counter_images, :]
                 #image = image[:, :, [2, 1, 0]]  # from BGR to RGB
                 image = self.preprocess_image(image)
                 image = self.preprocess_entry(image)
                 image = self.transform(image)
 
-                gaze_label = self.hdf['face_gaze'][idx_b, :]
+                gaze_label = self.hdf_nerf["pitchyaw_head"][counter_images, :]
                 gaze_label = gaze_label.astype(np.float32)
                 head_label = self.hdf['face_head_pose'][idx_b, :]
                 head_label = head_label.astype(np.float32)
 
+                face_mask = self.hdf_nerf["head_mask"][counter_images, :]
+                kernel_2 = np.ones((3, 3), dtype=np.uint8)
+                face_mask = cv2.erode(face_mask, kernel_2, iterations=2)
 
                 entry['image_b'] = image
                 entry['gaze_b'] = gaze_label
                 entry['head_b'] = head_label
+                entry['mask_b'] = face_mask
+                entry['cam_ind_b'] = self.hdf_nerf["cam_index"][counter_images, :]
+                entry['ldms_b'] = self.hdf_nerf["facial_landmarks"][counter_images, :]
+
 
             return entry
         else:

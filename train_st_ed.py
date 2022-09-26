@@ -27,11 +27,13 @@ logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
 import wandb
 from PIL import Image
 from torchvision import transforms
-from xgaze_dataloader import get_train_loader,get_val_loader
-from xgaze_dataloader_nerf import get_val_loader_processed
-from piq import ssim, SSIMLoss, psnr, LPIPS,DISTS
+from xgaze_dataloader import get_train_loader
+from xgaze_dataloader import get_val_loader as xgaze_get_val_loader
+from piq import ssim, psnr, LPIPS,DISTS
 import torch.nn.functional as F
 from gaze_estimation_utils import normalize
+import scipy.io
+from logging_utils import log_evaluation_image, log_one_subject_evaluation_results, log_all_datasets_evaluation_results
 
 trans = transforms.Compose([
         #transforms.ToPILImage(),
@@ -45,6 +47,10 @@ trans_eval = transforms.Compose([
         transforms.ToPILImage(),
         transforms.ToTensor(),  # this also convert pixel value from [0,255] to [0,1]
         transforms.Resize(size=(128,128)),
+    ])
+
+trans_normalize = transforms.Compose([
+        transforms.Resize(size=(512,512)),
     ])
 
 # Set Configurations
@@ -84,7 +90,7 @@ if not config.skip_training:
         #('gc/val', config.gazecapture_file, False, all_gc_prefixes['val']),
         #('gc/test', config.gazecapture_file, False, all_gc_prefixes['test']),
         #('mpi', config.mpiigaze_file, False, None),
-        ('xgaze_val', config.xgaze_val_file, False, None),
+        #('xgaze_val', config.xgaze_val_file, False, None),
         #('columbia', config.columbia_file, True, None),
         #('eyediap', config.eyediap_file, True, None),
     ]:
@@ -93,7 +99,7 @@ if not config.skip_training:
         #                     is_bgr=is_bgr,
         #                     get_2nd_sample=True,
         #                     pick_at_least_per_person=2)
-        dataset,dataloader = get_val_loader(data_dir = "/data/data2/aruzzi/train",batch_size=int(config.batch_size))
+        dataset,dataloader = xgaze_get_val_loader(data_dir = "/data/data2/aruzzi/train",batch_size=int(config.batch_size))
         if tag == 'gc/test':
             # test pair visualization:
             test_list = def_test_list()
@@ -163,7 +169,7 @@ del saver
 
 if config.load_step != 0:
     #load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '.pt'),device)
-    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_reduced.pt'),device)
+    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_partial.pt'),device)
     logging.info("Loaded checkpoints from step " + str(config.load_step))
 
 # Transfer on the GPU before constructing and optimizer
@@ -231,289 +237,245 @@ def execute_training_step(current_step):
         running_losses.add(key, value.numpy())
 
 
-def execute_test(tag, data_dict):
-    test_losses = RunningStatistics()
-    path = "sted/checkpoints/epoch_24_ckpt_128.pth.tar"
-    model = gaze_network().to(device)
-    state_dict = torch.load(path, map_location=torch.device("cpu"))
-    #model.load_state_dict(state_dict=state_dict)
-    model.load_state_dict(state_dict=state_dict['model_state'])
-    model.eval()
-    print("Done")
-    angular_loss = 0.0
-    num_images = 0
-    with torch.no_grad():
-        network.eval()
-        for index,input_dict in enumerate(data_dict['dataloader']):
-            #print("here")
-            input_dict = send_data_dict_to_gpu(input_dict, device)
-            #img = Image.fromarray(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8)[0])
-            #img.show()
-            output_dict, loss_dict = network(input_dict)
-            #print(output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()[0].shape)
-            #if tag == 'xgaze':
-            #    img = np.concatenate([((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255/2).astype(np.uint8)],axis=2)
-            num_images += input_dict['image_b'].shape[0]
-            print(num_images)
-            image_gt = np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
-            image_gen = np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
-            #image_gt = (input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)
-            #image_gen = (output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)
-            #image_gt = input_dict['image_b']
-            #image_gen = output_dict['image_b_hat']
-            for i in range(image_gt.shape[0]):
-                #print(i)
-                #print(image_gt[i,:].shape)
-                image = trans(image_gt[i,:])
-                #image = image_gt[i,:]
-                batch_images_norm = torch.reshape(image,(1,3,128,128)).to(device)
-                pitchyaw_gt = model(batch_images_norm)
-
-                image = trans(image_gen[i,:])
-                #image = image_gen[i,:]
-                batch_images_norm = torch.reshape(image,(1,3,128,128)).to(device)
-                pitchyaw_gen = model(batch_images_norm)
-
-                loss = losses.gaze_angular_loss(pitchyaw_gt,pitchyaw_gen)
-                #print(loss)
-                angular_loss += loss.detach().cpu().numpy()
-            if index % 3 == 0:
-                img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255.0/2.0),0,255).astype(np.uint8)],axis=2)
-                img = Image.fromarray(img[0])
-                log_image = wandb.Image(img)
-
-                #log_image.show()
-                wandb.log({"Test Prediction": log_image})
-            for key, value in loss_dict.items():
-                test_losses.add(key, value.detach().cpu().numpy())
-    test_loss_means = test_losses.means()
-    logging.info('Test Losses at [%7d] for %10s: %s' %
-                 (current_step, '[' + tag + ']',
-                  ', '.join(['%s: %.6f' % v for v in test_loss_means.items()])))
-    wandb.log({'angular loss': angular_loss/num_images})
-    if config.use_tensorboard:
-        for k, v in test_loss_means.items():
-            tensorboard.add_scalar('test/%s/%s' % (tag, k), v, current_step)
 
 def variance_of_laplacian(image):
     return cv2.Laplacian(image,cv2.CV_64F).var()
 
-def execute_test_new(tag, data_dict,log):
-    cam_matrix = []
-    cam_distortion = []
-    face_model_load =  np.loadtxt('data/eth_xgaze/face_model.txt')  # Generic face model with 3D facial landmarks
+def select_dataloader(name, subject, idx, img_dir, batch_size, num_images, num_workers, is_shuffle):
+    if name == "eth_xgaze":
+        return (name, subject, idx, xgaze_get_val_loader(data_dir=img_dir, batch_size=batch_size, num_val_images= num_images, num_workers= num_workers, is_shuffle= is_shuffle, subject=subject))
+    elif name == "mpii_face_gaze":
+        pass
+    elif name == "columbia":
+        pass
+    elif name == "gaze_capture":
+        pass
+    else:
+        print("Dataset not supported")
+
+def select_cam_matrix(name,cam_matrix,cam_distortion,cam_ind, subject):
+    if name == "eth_xgaze":
+        return cam_matrix[name][cam_ind], cam_distortion[name][cam_ind]
+    elif name == "mpii_face_gaze":
+        return cam_matrix[name][int(subject[-5:-3])], cam_distortion[name][int(subject[-5:-3])]
+    elif name == "columbia":
+        pass
+    elif name == "gaze_capture":
+        pass
+    else:
+        print("Dataset not supported")
+
+def load_cams():
+    cam_matrix = {}
+    cam_distortion = {}
+    cam_translation = {}
+    cam_rotation = {}
+
+    for name in config.data_names:
+        cam_matrix[name] = []
+        cam_distortion[name] = []
+        cam_translation[name] = []
+        cam_rotation[name] = []
+    
 
     for cam_id in range(18):
-        cam_file_name = 'data/eth_xgaze/cam/cam' + str(cam_id).zfill(2) + '.xml'
+        cam_file_name = "data/eth_xgaze/cam/cam" + str(cam_id).zfill(2) + ".xml"
         fs = cv2.FileStorage(cam_file_name, cv2.FILE_STORAGE_READ)
-        cam_matrix.append(fs.getNode('Camera_Matrix').mat())
-        cam_distortion.append(fs.getNode('Distortion_Coefficients').mat())
+        cam_matrix["eth_xgaze"].append(fs.getNode("Camera_Matrix").mat())
+        cam_distortion["eth_xgaze"].append(fs.getNode("Distortion_Coefficients").mat())
+        cam_translation["eth_xgaze"].append(fs.getNode("cam_translation"))
+        cam_rotation["eth_xgaze"].append(fs.getNode("cam_rotation"))
         fs.release()
 
-    refer_list_file = "train_test_split.json"
-    # print("load the train file list from: ", refer_list_file)
-
-    with open(refer_list_file, "r") as f:
-        datastore = json.load(f)
-
-    val_keys = datastore["val"]
-
-    dataloader_new = get_val_loader_processed(
-            "/data/data2/aruzzi", 1, 390 ,0,is_shuffle = False, evaluate="target", index_file="evaluate_input.txt"
+    for i in range(15):
+        file_name = os.path.join(
+        "data/mpii_face_gaze/cam", "Camera" + str(i).zfill(2) + ".mat"
         )
-    processed_dataloader_subjects = []
+        mat = scipy.io.loadmat(file_name)
+        cam_matrix["mpii_face_gaze"] = mat.get("cameraMatrix")
+        cam_distortion["mpii_face_gaze"] = mat.get(
+            "distCoeffs"
+    )
 
-    for subject in val_keys:
-        dataset,dataloader = get_val_loader("/data/data2/aruzzi/train",1,is_shuffle=False, subject = subject)
-        processed_dataloader_subjects.append(dataloader)
+    return cam_matrix,cam_distortion, cam_translation, cam_rotation
 
-    test_losses = RunningStatistics()
-    #path = "sted/checkpoints/epoch_24_ckpt_128.pth.tar"
-    #model = gaze_network().to(device)
+def execute_test(log, current_step):
+
+    face_model_load =  np.loadtxt('data/eth_xgaze/face_model.txt')  # Generic face model with 3D facial landmarks
+    val_keys = {}
+    for name in config.data_names:
+        file_path = os.path.join("data", name, "train_test_split.json")
+        with open(file_path, "r") as f:
+            datastore = json.load(f)
+        val_keys[name] = datastore["val"]
+
+    dataloader_all = []
+
+    for idx,name in enumerate(config.data_names):
+        for subject in val_keys[name]:
+            dataloader_all.append(select_dataloader(name, subject, idx, config.img_dir[idx], 1, config.num_images, 0, is_shuffle=False))   
+
+    cam_matrix, cam_distortion, cam_translation, cam_rotation = load_cams()
+
+
     path = "sted/checkpoints/epoch_24_head_ckpt.pth.tar"
     model = gaze_network_head().to(device)
     state_dict = torch.load(path, map_location=torch.device("cpu"))
-    #model.load_state_dict(state_dict=state_dict)
     model.load_state_dict(state_dict=state_dict['model_state'])
     model.eval()
     print("Done")
+    
 
-    angular_loss = 0.0
-    angular_head_loss = 0.0
-    ssim_loss = 0.0
-    psnr_loss = 0.0
-    lpips_loss = 0.0
-    dists_loss = 0.0
-    l1_loss = 0.0
-    l2_loss = 0.0
-    blur_loss = 0.0
-    num_images = 0
+    dict_angular_loss = {}
+    dict_angular_head_loss = {}
+    dict_ssim_loss = {}
+    dict_psnr_loss = {}
+    dict_lpips_loss = {}
+    dict_dists_loss = {}
+    dict_l1_loss = {}
+    dict_l2_loss = {}
+    dict_blur_loss = {}
+    dict_num_images = {}
 
-    for index, (
-                batch_images_1,
-                batch_head_mask_1,
-                batch_eye_mask_1,
-                batch_nl3dmm_para_dict_1,
-                ldms_1,
-                cam_ind_1,
-                idx_1,
-                key_1,
-                batch_images_2,
-                batch_head_mask_2,
-                batch_eye_mask_2,
-                batch_nl3dmm_para_dict_2,
-                ldms_2,
-                cam_ind_2,
-                idx_2,
-                key_2,
-            ) in enumerate(dataloader_new):
-            print(index)
-            ldms = ldms_2[0]
-            batch_head_mask = torch.reshape(batch_head_mask_2,(1,1,512,512))
-            batch_images = batch_images_2
-            cam_ind = cam_ind_2
-            batch_eye_mask =  batch_eye_mask_2
-            batch_nl3dmm_para_dict = batch_nl3dmm_para_dict_2
+    for name in config.data_names:
+        dict_angular_loss[name] = 0.0
+        dict_angular_head_loss[name] = 0.0
+        dict_ssim_loss[name] = 0.0
+        dict_psnr_loss[name] = 0.0
+        dict_lpips_loss[name] = 0.0
+        dict_dists_loss[name] = 0.0
+        dict_l1_loss[name] = 0.0
+        dict_l2_loss[name] = 0.0
+        dict_blur_loss[name] = 0.0
+        dict_num_images[name] = 0
+    
+    for name, subject, index_dataset, dataloader in dataloader_all:
+    
+        angular_loss = 0.0
+        angular_head_loss = 0.0
+        ssim_loss = 0.0
+        psnr_loss = 0.0
+        lpips_loss = 0.0
+        dists_loss = 0.0
+        l1_loss = 0.0
+        l2_loss = 0.0
+        blur_loss = 0.0
+        num_images = 0
+
+        for index,entry in enumerate(dataloader):
+            ldms = entry["ldms_b"][0]
+            batch_head_mask = torch.reshape(entry["mask_b"], (1, 1, 512, 512))
+            cam_ind = entry["cam_ind_b"]
+
+            camera_matrix, camera_distortion = select_cam_matrix(name, cam_matrix,cam_distortion, cam_ind, subject)
+
+            input_dict = send_data_dict_to_gpu(entry, device)
+            output_dict, loss_dict = network(input_dict)
+
+            image_gt = np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)[0,:]
+            image_gen = np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)[0,:]
+
+            batch_images_gt = trans_normalize(image_gt)
             nonhead_mask = batch_head_mask < 0.5
             nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)
-            head_mask = batch_head_mask >= 0.5
-            head_mask_c3b = head_mask.expand(-1, 3, -1, -1)
-            batch_images[nonhead_mask_c3b] = 1.0
-            batch_images_norm = normalize((batch_images.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0], cam_matrix[cam_ind], cam_distortion[cam_ind], face_model_load,ldms,224)
-            batch_images_norm = trans_eval(batch_images_norm)
-            white_mask = (batch_images_norm == 1.0).all(axis=0)
-            white_mask_c3b = white_mask.expand(3, -1, -1)
-
-            if len(torch.unique(batch_eye_mask_1)) == 1:
-                    print("No eye mask detected")
-                    continue
-            with torch.no_grad():
-                network.eval()
-                counter_images = 0
-                for i,i_dict in enumerate(processed_dataloader_subjects[key_1]):
-                    if i % 18 in [11, 12, 13, 14, 15]:
-                        continue
-                    else:
-                        if idx_1 == counter_images:
-                            input_dict = i_dict
-                            break
-                        counter_images+=1
-
-                counter_images = 0
-                for i,i_dict in enumerate(processed_dataloader_subjects[key_1]):
-                    if i % 18 in [11, 12, 13, 14, 15]:
-                        continue
-                    else:
-                        if idx_2 == counter_images:
-                            target_dict = i_dict
-                            break
-                        counter_images+=1
-
-                input_dict['image_b'] = target_dict['image_a']
-                input_dict['gaze_b'] = target_dict['gaze_a']
-                input_dict['head_b'] = target_dict['head_a']
-
-                #print("here")
-                input_dict = send_data_dict_to_gpu(input_dict, device)
-                #img = Image.fromarray(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8)[0])
-                #img.show()
-                output_dict, loss_dict = network(input_dict)
-                #print(output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()[0].shape)
-                #if tag == 'xgaze':
-                #    img = np.concatenate([((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255/2).astype(np.uint8),((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy()  +1) * 255/2).astype(np.uint8)],axis=2)
-                num_images += input_dict['image_b'].shape[0]
-                image_gt = np.clip(((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
-                image_gen = np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
-                #image_gt = (input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)
-                #image_gen = (output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)
-                #image_gt = input_dict['image_b']
-                #image_gen = output_dict['image_b_hat']
-
-                for i in range(image_gt.shape[0]):
-                    image_white = trans_eval(image_gt[i,:])
-                    image_white[white_mask_c3b] = 1.0
-                    target_normalized = torch.reshape(image_white,(1,3,128,128)).to(device)
-                    image = trans(image_white)
-                    batch_images_norm_gt = torch.reshape(image,(1,3,128,128)).to(device)
-                    pitchyaw_gt, head_gt = model(batch_images_norm_gt)
-
-                    image_tmp = trans_eval(image_gen[i,:])
-                    image_tmp[white_mask_c3b] = 1.0
-                    pred_normalized = torch.reshape(image_tmp,(1,3,128,128)).to(device)
-                    image = trans(image_tmp)
-                    batch_images_norm_pred = torch.reshape(image,(1,3,128,128)).to(device)
-                    pitchyaw_gen, head_gen = model(batch_images_norm_pred)
-
-                    loss = losses.gaze_angular_loss(pitchyaw_gt,pitchyaw_gen).detach().cpu().numpy()
-                    angular_loss += loss
-                    print("Gaze Angular Error: ",angular_loss/num_images,loss,num_images)
-
-                    loss = losses.gaze_angular_loss(head_gt,head_gen).detach().cpu().numpy()
-                    angular_head_loss += loss
-                    print("Head Angular Error: ",angular_head_loss/num_images,loss,num_images)
-
-                    loss = ssim(target_normalized, pred_normalized, data_range=1.).detach().cpu().numpy()
-                    ssim_loss += loss
-                    print("SSIM: ",ssim_loss/num_images,loss,num_images)
-
-                    loss = psnr(target_normalized, pred_normalized, data_range=1.).detach().cpu().numpy()
-                    psnr_loss += loss
-                    print("PSNR: ",psnr_loss/num_images,loss,num_images)
-
-                    lpips_metric = LPIPS()
-                    loss = lpips_metric(target_normalized, pred_normalized).detach().cpu().numpy()
-                    lpips_loss += loss
-                    print("LPIPS: ",lpips_loss/num_images,loss,num_images)
-
-                    dists_metric = DISTS()
-                    loss = dists_metric(target_normalized, pred_normalized).detach().cpu().numpy()
-                    dists_loss += loss
-                    print("DISTS: ",dists_loss/num_images,loss,num_images)
-
-                    loss = torch.nn.functional.l1_loss(target_normalized, pred_normalized).detach().cpu().numpy()
-                    l1_loss += loss
-                    print("L1 Distance: ", l1_loss/num_images,loss, num_images)
-
-                    loss = F.mse_loss(target_normalized, pred_normalized).detach().cpu().numpy()
-                    l2_loss += loss
-                    print("L2 Distance: ", l2_loss/num_images,loss, num_images)
-
-                    gray_pred = cv2.cvtColor((pred_normalized.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0], cv2.COLOR_BGR2GRAY)
-                    loss = variance_of_laplacian(gray_pred)
-                    blur_loss += loss
-                    print("Image Blurriness: ", blur_loss/num_images, loss, num_images)
-
-                if index % log == 0:
-                    img = np.concatenate([np.clip(((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8),(torch.reshape(image_white,(1,3,128,128)).detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8), (torch.reshape(image_tmp,(1,3,128,128)).detach().cpu().permute(0, 2, 3, 1).numpy() * 255.0).astype(np.uint8)],axis=2)
-                    img = Image.fromarray(img[0])
-                    log_image = wandb.Image(img)
-
-                    #log_image.show()
-                    wandb.log({"Test Prediction": log_image})
-                for key, value in loss_dict.items():
-                    test_losses.add(key, value.detach().cpu().numpy())
-    test_loss_means = test_losses.means()
-    logging.info('Test Losses at [%7d] for %10s: %s' %
-                 (current_step, '[' + tag + ']',
-                  ', '.join(['%s: %.6f' % v for v in test_loss_means.items()])))
+            batch_images_gt_white = torch.reshape(batch_images_gt,(1,3,512,512))
+            batch_images_gt_white[nonhead_mask_c3b] = 1.0
+            batch_images_gt_norm = normalize(
+                (batch_images_gt_white.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(
+                    np.uint8
+                )[0],
+                camera_matrix,
+                camera_distortion,
+                face_model_load,
+                ldms,
+                config.img_dim,
+            )
+            batch_images_gt_norm = trans_eval(batch_images_gt_norm)
+            target_normalized = torch.reshape(batch_images_gt_norm,(1,3,128,128)).to(device)
+            image = trans(batch_images_gt_norm)
+            batch_images_norm_gt = torch.reshape(image,(1,3,128,128)).to(device)
+            pitchyaw_gt, head_gt = model(batch_images_norm_gt)
 
 
-    print(angular_loss/num_images)
-    print(angular_head_loss/num_images)
-    print(ssim_loss/num_images)
-    print(psnr_loss/num_images)
-    print(lpips_loss/num_images)
-    print(dists_loss/num_images)
-    print(l1_loss/num_images)
-    print(l2_loss/num_images)
-    print(blur_loss/num_images)
+            batch_images_gen = trans_normalize(image_gen)
+            nonhead_mask = batch_head_mask < 0.5
+            nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)
+            batch_images_gen_white = torch.reshape(batch_images_gen,(1,3,512,512))
+            batch_images_gt_white[nonhead_mask_c3b] = 1.0
+            batch_images_gen_norm = normalize(
+                (batch_images_gen_white.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(
+                    np.uint8
+                )[0],
+                camera_matrix,
+                camera_distortion,
+                face_model_load,
+                ldms,
+                config.img_dim,
+            )
+            batch_images_gen_norm = trans_eval(batch_images_gen_norm)
+            pred_normalized = torch.reshape(batch_images_gen_norm,(1,3,128,128)).to(device)
+            image = trans(batch_images_gen_norm)
+            batch_images_norm_pred = torch.reshape(image,(1,3,128,128)).to(device)
+            pitchyaw_gen, head_gen = model(batch_images_norm_pred)
 
+            loss = losses.gaze_angular_loss(pitchyaw_gt,pitchyaw_gen).detach().cpu().numpy()
+            angular_loss += loss
+            num_images += 1
+            dict_angular_loss[name] += loss
+            dict_num_images[name] += 1
+            print("Gaze Angular Error: ",angular_loss/num_images,loss,num_images)
 
-    wandb.log({"angular error" : angular_loss/num_images,"angular head error" : angular_head_loss/num_images, "SSIM": ssim_loss/num_images, "PSNR" : psnr_loss/num_images,
-                   "LPIPS": lpips_loss/num_images, "DISTS: " : dists_loss/num_images, "L1 Distance: " : l1_loss/num_images, "L2 Distance: " : l2_loss/num_images, "Image Blurriness: " : blur_loss/num_images})
-    if config.use_tensorboard:
-        for k, v in test_loss_means.items():
-            tensorboard.add_scalar('test/%s/%s' % (tag, k), v, current_step)
+            loss = losses.gaze_angular_loss(head_gt,head_gen).detach().cpu().numpy()
+            angular_head_loss += loss
+            dict_angular_head_loss[name] += loss
+            print("Head Angular Error: ",angular_head_loss/num_images,loss,num_images)
+
+            loss = ssim(target_normalized, pred_normalized, data_range=1.).detach().cpu().numpy()
+            ssim_loss += loss
+            dict_ssim_loss[name] += loss
+            print("SSIM: ",ssim_loss/num_images,loss,num_images)
+
+            loss = psnr(target_normalized, pred_normalized, data_range=1.).detach().cpu().numpy()
+            psnr_loss += loss
+            dict_psnr_loss[name] += loss
+            print("PSNR: ",psnr_loss/num_images,loss,num_images)
+
+            lpips_metric = LPIPS()
+            loss = lpips_metric(target_normalized, pred_normalized).detach().cpu().numpy()
+            lpips_loss += loss
+            dict_lpips_loss[name] += loss
+            print("LPIPS: ",lpips_loss/num_images,loss,num_images)
+
+            dists_metric = DISTS()
+            loss = dists_metric(target_normalized, pred_normalized).detach().cpu().numpy()
+            dists_loss += loss
+            dict_dists_loss[name] += loss
+            print("DISTS: ",dists_loss/num_images,loss,num_images)
+
+            loss = torch.nn.functional.l1_loss(target_normalized, pred_normalized).detach().cpu().numpy()
+            l1_loss += loss
+            dict_l1_loss[name] += loss
+            print("L1 Distance: ", l1_loss/num_images,loss, num_images)
+
+            loss = F.mse_loss(target_normalized, pred_normalized).detach().cpu().numpy()
+            l2_loss += loss
+            dict_l2_loss[name] += loss
+            print("L2 Distance: ", l2_loss/num_images,loss, num_images)
+
+            gray_pred = cv2.cvtColor((pred_normalized.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0], cv2.COLOR_BGR2GRAY)
+            loss = variance_of_laplacian(gray_pred)
+            blur_loss += loss
+            dict_blur_loss[name] += loss
+            print("Image Blurriness: ", blur_loss/num_images, loss, num_images)
+
+            if index % log == 0:
+                log_evaluation_image(pred_normalized, target_normalized, entry['image_a'], image_gt, image_gen)
+
+        if index % log == 0:
+            log_one_subject_evaluation_results(current_step,angular_loss, angular_head_loss, ssim_loss, psnr_loss, lpips_loss, dists_loss, l1_loss, l2_loss, blur_loss, num_images )
+            log_all_datasets_evaluation_results(current_step,config.data_names, dict_angular_loss, dict_angular_head_loss, dict_ssim_loss, dict_psnr_loss, dict_lpips_loss, dict_dists_loss, dict_l1_loss, dict_l2_loss, dict_blur_loss, dict_num_images)
+    if index % log == 0:
+        log_all_datasets_evaluation_results(current_step,config.data_names, dict_angular_loss, dict_angular_head_loss, dict_ssim_loss, dict_psnr_loss, dict_lpips_loss, dict_dists_loss, dict_l1_loss, dict_l2_loss, dict_blur_loss, dict_num_images)
 
 
 def execute_visualize(data):
@@ -556,7 +518,7 @@ if not config.skip_training:
             network.clean_up()
             torch.cuda.empty_cache()
             for tag, data_dict in list(all_data.items())[:-1]:
-                execute_test_new(tag, data_dict,20)
+                execute_test(1, current_step)
                 # This might help with memory leaks
                 torch.cuda.empty_cache()
         # Visualization loop
@@ -645,7 +607,7 @@ if config.compute_full_result:
     network.eval()
     torch.cuda.empty_cache()
     for tag, data_dict in list(all_data.items()):
-        execute_test_new(tag, data_dict,1)
+        execute_test(1,0)
     if config.use_tensorboard:
         tensorboard.close()
         del tensorboard
