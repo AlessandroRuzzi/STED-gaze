@@ -487,7 +487,7 @@ def execute_test(log, current_step):
 
         if index % log == 0:
             log_one_subject_evaluation_results(current_step,angular_loss, angular_head_loss, ssim_loss, psnr_loss, lpips_loss, dists_loss, l1_loss, l2_loss, blur_loss, num_images )
-            log_all_datasets_evaluation_results(current_step,config.data_names, dict_angular_loss, dict_angular_head_loss, dict_ssim_loss, dict_psnr_loss, dict_lpips_loss, dict_dists_loss, dict_l1_loss, dict_l2_loss, dict_blur_loss, dict_num_images)
+            #log_all_datasets_evaluation_results(current_step,config.data_names, dict_angular_loss, dict_angular_head_loss, dict_ssim_loss, dict_psnr_loss, dict_lpips_loss, dict_dists_loss, dict_l1_loss, dict_l2_loss, dict_blur_loss, dict_num_images)
     if index % log == 0:
         log_all_datasets_evaluation_results(current_step,config.data_names, dict_angular_loss, dict_angular_head_loss, dict_ssim_loss, dict_psnr_loss, dict_lpips_loss, dict_dists_loss, dict_l1_loss, dict_l2_loss, dict_blur_loss, dict_num_images)
 
