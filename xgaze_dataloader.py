@@ -209,7 +209,8 @@ class GazeDataset(Dataset):
 
         # Get labels
         if self.is_load_label:
-            gaze_label = self.hdf_nerf["pitchyaw_head"][counter_images, :]
+            #gaze_label = self.hdf_nerf["pitchyaw_head"][counter_images, :]
+            gaze_label = self.hdf["face_gaze"][idx, :]
             gaze_label = gaze_label.astype(np.float32)
             head_label = self.hdf['face_head_pose'][idx, :]
             head_label = head_label.astype(np.float32)
@@ -265,7 +266,8 @@ class GazeDataset(Dataset):
                 image = self.preprocess_entry(image)
                 image = self.transform(image)
 
-                gaze_label = self.hdf_nerf["pitchyaw_head"][counter_images, :]
+                #gaze_label = self.hdf_nerf["pitchyaw_head"][counter_images, :]
+                gaze_label = self.hdf["face_gaze"][idx_b, :]
                 gaze_label = gaze_label.astype(np.float32)
                 head_label = self.hdf['face_head_pose'][idx_b, :]
                 head_label = head_label.astype(np.float32)
