@@ -106,8 +106,8 @@ def log_one_image(img_tensor, pred_dict):
 def log_evaluation_image(batch_images_norm_pre, target_normalized_log, batch_images_1, batch_images_2, pred, face_images_norm, face_images_norm_pre, eye_images_norm, eye_images_norm_pre):
     res_img = np.concatenate(
                     [
-                        target_normalized_log.reshape(1, 224, 224, 3),
-                        batch_images_norm_pre.reshape(1, 224, 224, 3),
+                        (target_normalized_log.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8),
+                        (batch_images_norm_pre.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8),
                     ],
                     axis=2,
                 )
@@ -117,8 +117,8 @@ def log_evaluation_image(batch_images_norm_pre, target_normalized_log, batch_ima
 
     res_img = np.concatenate(
                     [
-                        face_images_norm.reshape(1, 224, 224, 3),
-                        face_images_norm_pre.reshape(1, 224, 224, 3),
+                        (face_images_norm.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8),
+                        (face_images_norm_pre.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8),
                     ],
                     axis=2,
                 )
@@ -128,8 +128,8 @@ def log_evaluation_image(batch_images_norm_pre, target_normalized_log, batch_ima
 
     res_img = np.concatenate(
                     [
-                        eye_images_norm.reshape(1, 224, 224, 3),
-                        eye_images_norm_pre.reshape(1, 224, 224, 3),
+                        (eye_images_norm.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8),
+                        (eye_images_norm_pre.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8),
                     ],
                     axis=2,
                 )
@@ -139,15 +139,9 @@ def log_evaluation_image(batch_images_norm_pre, target_normalized_log, batch_ima
 
     res_img = np.concatenate(
         [
-            (
-                batch_images_1.detach().cpu().permute(0, 2, 3, 1).numpy() * 255
-            ).astype(np.uint8),
-            (
-                batch_images_2.detach().cpu().permute(0, 2, 3, 1).numpy() * 255
-            ).astype(np.uint8),
-            (   pred.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(
-                np.uint8
-            )
+            batch_images_1,
+            batch_images_2,
+            pred,
         ],
         axis=2,
     )

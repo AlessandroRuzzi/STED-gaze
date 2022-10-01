@@ -657,7 +657,7 @@ def execute_test(log, current_step):
             print("Image Blurriness eyes: ", blur_eye_loss / num_images, loss, num_images)
 
             if index % log == 0:
-                log_evaluation_image(pred_normalized, target_normalized, ((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0).astype(np.uint8), image_gt, image_gen,  face_images_norm_big, face_images_norm_pre_big, eye_images_norm_big, eye_images_norm_pre_big)
+                log_evaluation_image(pred_normalized, target_normalized, ((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0).astype(np.uint8), image_gt, image_gen,  face_images_norm, face_images_norm_pre, eye_images_norm, eye_images_norm_pre)
 
         if index % log == 0:
             log_one_subject_evaluation_results(current_step, angular_loss, angular_head_loss, ssim_loss, psnr_loss, lpips_loss, dists_loss, 
