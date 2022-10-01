@@ -20,7 +20,7 @@
     "skip_training": false,
     "print_freq_train": 200,
     "test_subsample": 0.02,
-    "print_freq_test": 200,
+    "print_freq_test": 10000,
     "save_freq_images": 5000,
     "save_interval": 10000,
     "size_0d_unit": 1024,
