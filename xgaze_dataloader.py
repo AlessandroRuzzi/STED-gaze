@@ -276,10 +276,15 @@ class GazeDataset(Dataset):
                 kernel_2 = np.ones((3, 3), dtype=np.uint8)
                 face_mask = cv2.erode(face_mask, kernel_2, iterations=2)
 
+                left_eye_mask = self.hdf_nerf["left_eye_mask"][counter_images, :]
+                right_eye_mask = self.hdf_nerf["right_eye_mask"][counter_images, :]
+
                 entry['image_b'] = image
                 entry['gaze_b'] = gaze_label
                 entry['head_b'] = head_label
                 entry['mask_b'] = face_mask
+                entry['left_eye_b'] = left_eye_mask
+                entry['right_eye_b'] = right_eye_mask
                 entry['cam_ind_b'] = self.hdf_nerf["cam_index"][counter_images, :]
                 entry['ldms_b'] = self.hdf_nerf["facial_landmarks"][counter_images, :]
 

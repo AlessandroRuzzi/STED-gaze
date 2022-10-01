@@ -103,11 +103,11 @@ def log_one_image(img_tensor, pred_dict):
     log_image = wandb.Image(img)
     wandb.log({"Prediction": log_image})
 
-def log_evaluation_image(batch_images_norm_pre, target_normalized_log, batch_images_1, batch_images_2, pred):
+def log_evaluation_image(batch_images_norm_pre, target_normalized_log, batch_images_1, batch_images_2, pred, face_images_norm, face_images_norm_pre, eye_images_norm, eye_images_norm_pre):
     res_img = np.concatenate(
                     [
-                        (target_normalized_log.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8),
-                        (batch_images_norm_pre.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8),
+                        target_normalized_log.reshape(1, 224, 224, 3),
+                        batch_images_norm_pre.reshape(1, 224, 224, 3),
                     ],
                     axis=2,
                 )
@@ -116,10 +116,38 @@ def log_evaluation_image(batch_images_norm_pre, target_normalized_log, batch_ima
     wandb.log({" Target Normalized | Prediction Normalized ": log_image})
 
     res_img = np.concatenate(
+                    [
+                        face_images_norm.reshape(1, 224, 224, 3),
+                        face_images_norm_pre.reshape(1, 224, 224, 3),
+                    ],
+                    axis=2,
+                )
+    img = Image.fromarray(res_img[0])
+    log_image = wandb.Image(img)
+    wandb.log({" Target Face Normalized | Prediction Face Normalized ": log_image})
+
+    res_img = np.concatenate(
+                    [
+                        eye_images_norm.reshape(1, 224, 224, 3),
+                        eye_images_norm_pre.reshape(1, 224, 224, 3),
+                    ],
+                    axis=2,
+                )
+    img = Image.fromarray(res_img[0])
+    log_image = wandb.Image(img)
+    wandb.log({" Target Eyes Normalized | Prediction Eyes Normalized ": log_image})
+
+    res_img = np.concatenate(
         [
-            batch_images_1,
-            batch_images_2,
-            pred,
+            (
+                batch_images_1.detach().cpu().permute(0, 2, 3, 1).numpy() * 255
+            ).astype(np.uint8),
+            (
+                batch_images_2.detach().cpu().permute(0, 2, 3, 1).numpy() * 255
+            ).astype(np.uint8),
+            (   pred.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(
+                np.uint8
+            )
         ],
         axis=2,
     )
@@ -131,23 +159,37 @@ def log_simple_image(img, description):
     log_image = wandb.Image(img)
     wandb.log({description: log_image})
 
-def log_one_subject_evaluation_results(current_step,angular_loss, angular_head_loss, ssim_loss, psnr_loss, lpips_loss, dists_loss, l1_loss, l2_loss, blur_loss, num_images ):
+def log_one_subject_evaluation_results(current_step, angular_loss, angular_head_loss, ssim_loss, psnr_loss, lpips_loss, dists_loss,
+                                        ssim_eye_loss, psnr_eye_loss, lpips_eye_loss, blur_eye_loss, ssim_face_loss, psnr_face_loss, lpips_face_loss, blur_face_loss,
+                                         l1_loss, l2_loss, blur_loss, num_images ):
     wandb.log(
                 {
-                    "Current_STEP": current_step,
+                    "Current_Step": current_step,
                     "Subject Angular Error": angular_loss / num_images,
                     "Subject Angular Head Error": angular_head_loss / num_images,
                     "Subject SSIM": ssim_loss / num_images,
                     "Subject PSNR": psnr_loss / num_images,
                     "Subject LPIPS": lpips_loss / num_images,
                     "Subject DISTS: ": dists_loss / num_images,
+
+                    "Subject SSIM face": ssim_face_loss / num_images,
+                    "Subject PSNR face": psnr_face_loss / num_images,
+                    "Subject LPIPS face": lpips_face_loss / num_images,
+                    "Subject Image Blurriness face: ": blur_face_loss / num_images,
+                    "Subject SSIM eyes": ssim_eye_loss / num_images,
+                    "Subject PSNR eyes": psnr_eye_loss / num_images,
+                    "Subject LPIPS eyes": lpips_eye_loss / num_images,
+                    "Subject Image Blurriness eyes: ": blur_eye_loss / num_images,
+
                     "Subject L1 Distance: ": l1_loss / num_images,
                     "Subject L2 Distance: ": l2_loss / num_images,
                     "Subject Image Blurriness: ": blur_loss / num_images,
                 }
             )
 
-def log_all_datasets_evaluation_results(current_step, data_names, dict_angular_loss, dict_angular_head_loss, dict_ssim_loss, dict_psnr_loss, dict_lpips_loss, dict_dists_loss, dict_l1_loss, dict_l2_loss, dict_blur_loss, dict_num_images):
+def log_all_datasets_evaluation_results(current_step, data_names, dict_angular_loss, dict_angular_head_loss, dict_ssim_loss, dict_psnr_loss, dict_lpips_loss, dict_dists_loss, 
+                                        dict_ssim_eye_loss, dict_psnr_eye_loss, dict_lpips_eye_loss, dict_blur_eye_loss, dict_ssim_face_loss, dict_psnr_face_loss, dict_lpips_face_loss, dict_blur_face_loss,
+                                        dict_l1_loss, dict_l2_loss, dict_blur_loss, dict_num_images):
 
     angular_loss = 0.0
     angular_head_loss = 0.0
@@ -155,6 +197,16 @@ def log_all_datasets_evaluation_results(current_step, data_names, dict_angular_l
     psnr_loss = 0.0
     lpips_loss = 0.0
     dists_loss = 0.0
+
+    ssim_eye_loss = 0.0
+    psnr_eye_loss = 0.0
+    lpips_eye_loss = 0.0
+    blur_eye_loss = 0.0
+    ssim_face_loss = 0.0
+    psnr_face_loss = 0.0
+    lpips_face_loss = 0.0
+    blur_face_loss = 0.0
+
     l1_loss = 0.0
     l2_loss = 0.0
     blur_loss = 0.0
@@ -166,6 +218,16 @@ def log_all_datasets_evaluation_results(current_step, data_names, dict_angular_l
         ssim_loss += dict_ssim_loss[name] 
         psnr_loss += dict_psnr_loss[name]
         lpips_loss += dict_lpips_loss[name]
+
+        ssim_face_loss += dict_ssim_face_loss[name] 
+        psnr_face_loss += dict_psnr_face_loss[name]
+        lpips_face_loss += dict_lpips_face_loss[name]
+        blur_face_loss += dict_blur_face_loss[name]
+        ssim_eye_loss += dict_ssim_eye_loss[name] 
+        psnr_eye_loss += dict_psnr_eye_loss[name]
+        lpips_eye_loss += dict_lpips_eye_loss[name]
+        blur_eye_loss += dict_blur_eye_loss[name]
+
         dists_loss += dict_dists_loss[name]
         l1_loss += dict_l1_loss[name]
         l2_loss += dict_l2_loss[name]
@@ -173,12 +235,23 @@ def log_all_datasets_evaluation_results(current_step, data_names, dict_angular_l
         num_images += dict_num_images[name]
 
         wandb.log(
-                {   "Current_STEP": current_step,
+                {
+                    "Current_Step": current_step,
                     name + " Angular Error": dict_angular_loss[name] / dict_num_images[name],
                     name + " Angular Head Error": dict_angular_head_loss[name] / dict_num_images[name],
                     name + " SSIM": dict_ssim_loss[name] / dict_num_images[name],
                     name + " PSNR": dict_psnr_loss[name] / dict_num_images[name],
                     name + " LPIPS": dict_lpips_loss[name] / dict_num_images[name],
+
+                    name + " SSIM face": dict_ssim_face_loss[name] / dict_num_images[name],
+                    name + " PSNR face": dict_psnr_face_loss[name] / dict_num_images[name],
+                    name + " LPIPS face": dict_lpips_face_loss[name] / dict_num_images[name],
+                    name + " Image Blurriness face: ": dict_blur_face_loss[name] / dict_num_images[name],
+                    name + " SSIM eyes": dict_ssim_eye_loss[name] / dict_num_images[name],
+                    name + " PSNR eyes": dict_psnr_eye_loss[name] / dict_num_images[name],
+                    name + " LPIPS eyes": dict_lpips_eye_loss[name] / dict_num_images[name],
+                    name + " Image Blurriness eyes: ": dict_blur_eye_loss[name] / dict_num_images[name],
+
                     name + " DISTS: ": dict_dists_loss[name] / dict_num_images[name],
                     name + " L1 Distance: ": dict_l1_loss[name] / dict_num_images[name],
                     name + " L2 Distance: ": dict_l2_loss[name] / dict_num_images[name],
@@ -187,12 +260,22 @@ def log_all_datasets_evaluation_results(current_step, data_names, dict_angular_l
             )
     wandb.log(
                 {
-                    "Current_STEP": current_step,
+                    "Current_Step": current_step,
                     " FULL Angular Error": angular_loss / num_images,
                     " FULL Angular Head Error": angular_head_loss / num_images,
                     " FULL SSIM": ssim_loss / num_images,
                     " FULL PSNR": psnr_loss / num_images,
                     " FULL LPIPS": lpips_loss / num_images,
+
+                    " FULL SSIM face": ssim_face_loss / num_images,
+                    " FULL PSNR face": psnr_face_loss / num_images,
+                    " FULL LPIPS face": lpips_face_loss / num_images,
+                    " FULL Image Blurriness face: ": blur_face_loss / num_images,
+                    " FULL SSIM eyes": ssim_eye_loss / num_images,
+                    " FULL PSNR eyes": psnr_eye_loss / num_images,
+                    " FULL LPIPS eyes": lpips_eye_loss / num_images,
+                    " FULL Image Blurriness eyes: ": blur_eye_loss / num_images,
+
                     " FULL DISTS: ": dists_loss / num_images,
                     " FULL L1 Distance: ": l1_loss / num_images,
                     " FULL L2 Distance: ": l2_loss / num_images,
@@ -203,14 +286,15 @@ def log_all_datasets_evaluation_results(current_step, data_names, dict_angular_l
 
     
 
-def log_losses(loss_dict, use_vgg_loss, use_gaze_vgg_loss, use_angular_loss, epoch, prefix = "TRAIN "):
+def log_losses(loss_dict, use_vgg_loss, use_patch_gan_loss, use_angular_loss, epoch, prefix = "TRAIN "):
     wandb.log({prefix + "Total Loss Batch": loss_dict["total_loss"]})
     if use_vgg_loss:
         wandb.log({prefix + "VGG Face Loss Batch": loss_dict["vgg_face_loss"]})
         wandb.log({prefix + "VGG Left Loss Batch": loss_dict["vgg_left_eye_loss"]})
         wandb.log({prefix + "VGG Right Loss Batch": loss_dict["vgg_right_eye_loss"]})
-    if use_gaze_vgg_loss:
-        wandb.log({prefix + "Gaze VGG Loss Batch": loss_dict["gaze_vgg"]})
+    if use_patch_gan_loss:
+        #wandb.log({prefix + "Discriminator Patch GAN Loss Batch": loss_dict["disc_patch_gan_loss"]})
+        wandb.log({prefix + "Generator Patch GAN Loss Batch": loss_dict["gen_patch_gan_loss"]})
     if use_angular_loss:
         wandb.log({prefix + "Angular Loss Batch": loss_dict["angular"]})
     if epoch > -1:
