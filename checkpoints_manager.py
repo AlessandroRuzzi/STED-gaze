@@ -50,25 +50,29 @@ class CheckpointsManager(object):
         fpaths = sorted(fpaths)  # sort by step number
         return fpaths
 
-    def load_last_checkpoint(self):
+    def load_last_checkpoint(self,xgaze = False):
         available_fpaths = self.all_available_checkpoint_files
         if len(available_fpaths) > 0:
             step_number, fpath = available_fpaths[-1]
             logging.info('Found weights file: %s' % fpath)
-            loaded_step_number = self.load_checkpoint(step_number, fpath)
+            loaded_step_number = self.load_checkpoint(step_number, fpath, xgaze)
             return loaded_step_number
         return 0
 
-    def load_checkpoint(self, step_number, checkpoint_fpath):
+    def load_checkpoint(self, step_number, checkpoint_fpath, xgaze = False):
         assert os.path.isfile(checkpoint_fpath)
         weights = torch.load(checkpoint_fpath,map_location=torch.device(self.device))
+       
 
         # If was stored using DataParallel but being read on 1 GPU
         if torch.cuda.device_count() == 1:
             if next(iter(weights.keys())).startswith('module.'):
                 weights = dict([(k[7:], v) for k, v in weights.items()])
-
-        self.network.load_state_dict(weights)
+        if xgaze:
+            self.network.load_state_dict(weights["model_state"])
+        else:
+            self.network.load_state_dict(weights)
+        
         logging.info('Loaded known model weights at step %d' % step_number)
         return step_number
 
