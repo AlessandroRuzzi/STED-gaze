@@ -10,7 +10,7 @@
     "data_names": ["eth_xgaze"],
     "img_dir":["/data/data2/aruzzi/train"],
     "img_dim": 224,
-    "num_images": 100,
+    "num_images": 128,
     "save_path": "sted",
     "batch_size": 20,
     "growth_rate": 32,
