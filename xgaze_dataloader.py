@@ -134,10 +134,9 @@ class GazeDataset(Dataset):
                 else:
                     n= 360
                     #n = self.hdfs[num_i]["face_patch"].shape[0]
-                if subject == None:
-                    self.idx_to_kv += [(num_i, i) for i in range(n) if i % 18 not in [11, 12, 14, 15]]
-                else:
-                    self.idx_to_kv += [(num_i, i) for i in range(n)]
+                
+                self.idx_to_kv += [(num_i, i) for i in range(n) if i % 18 not in [11, 12, 14, 15]]
+                
         else:
             print('load the file: ', index_file)
             self.idx_to_kv = np.loadtxt(index_file, dtype=np.int)

@@ -743,65 +743,10 @@ if config.compute_full_result:
     
     logging.info('Computing complete test results for final model...')
 
-    all_data = OrderedDict()
-    for tag, hdf_file, is_bgr, prefixes in [
-        #('gc/val', config.gazecapture_file, False, all_gc_prefixes['val']),
-        #('gc/test', config.gazecapture_file, False, all_gc_prefixes['test']),
-        #('mpi', config.mpiigaze_file, False, None),
-        #('xgaze', config.xgaze_file, False, None),
-        ('xgaze_val', config.xgaze_val_file, False, None)
-        #('columbia', config.columbia_file, True, None),
-        #('eyediap', config.eyediap_file, True, None),
-    ]:
-        # Define dataset structure based on selected prefixes
-        dataset = HDFDataset(hdf_file_path=hdf_file,
-                             prefixes=prefixes,
-                             is_bgr=is_bgr,
-                             get_2nd_sample=True,
-                             pick_at_least_per_person=2)
-        if tag == 'gc/test':
-            # test pair visualization:
-            test_list = def_test_list()
-            test_visualize = get_example_images(dataset, test_list)
-            test_visualize = send_data_dict_to_gpu(test_visualize, device)
-            with torch.no_grad():
-                # save redirected, style modified samples
-                execute_visualize(test_visualize)
-        all_data[tag] = {
-            'dataset': dataset,
-            'dataloader': DataLoader(dataset,
-                                     batch_size=config.eval_batch_size,
-                                     shuffle=False,
-                                     num_workers=config.num_data_loaders,
-                                     pin_memory=True,
-                                     worker_init_fn=worker_init_fn),
-        }
-    logging.info('')
-
-    for tag, val in all_data.items():
-        tag = '[%s]' % tag
-        dataset = val['dataset']
-        original_dataset = dataset.dataset if isinstance(dataset, Subset) else dataset
-        num_entries = len(original_dataset)
-        num_people = len(original_dataset.prefixes)
-        logging.info('%10s set size:                %7d' % (tag, num_entries))
-        logging.info('%10s num people:              %7d' % (tag, num_people))
-        logging.info('')
-
-    for tag, data_dict in all_data.items():
-        dataset = data_dict['dataset']
-        # Have dataloader re-open HDF to avoid multi-processing related errors.
-        original_dataset = dataset.dataset if isinstance(dataset, Subset) else dataset
-        original_dataset.close_hdf()
-
     network.eval()
     torch.cuda.empty_cache()
-    for tag, data_dict in list(all_data.items()):
-        execute_test(1,0)
-    if config.use_tensorboard:
-        tensorboard.close()
-        del tensorboard
-    # network.clean_up()
+    execute_test(1,0)
+    
     torch.cuda.empty_cache()
 
 # Use Redirector to create new training data
