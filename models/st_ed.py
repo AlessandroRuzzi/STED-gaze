@@ -53,6 +53,12 @@ class STED(nn.Module):
         self.GazeHeadNet_train = GazeHeadNet().to(self.device)
         self.GazeHeadNet_eval = GazeHeadResNet().to(self.device)
         self.discriminator = PatchGAN(input_nc=3).to(self.device)
+        self.register_buffer(
+            "mean", torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
+        )
+        self.register_buffer(
+            "std", torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
+        )
         self.generator_params = []
         for name, param in self.named_parameters():
             if 'encoder' in name or 'decoder' in name or 'classifier' in name:
@@ -323,8 +329,8 @@ class STED(nn.Module):
                     losses_dict['label_disentangle'] += losses.gaze_angular_loss(y, y_hat)
             total_loss += losses_dict['label_disentangle'] * config.coeff_disentangle_pseudo_label_loss
 
-        feature_h, gaze_h, head_h = self.GazeHeadNet_train(image_b_hat, True)
-        feature_t, gaze_t, head_t = self.GazeHeadNet_train(data['image_b'], True)
+        feature_h, gaze_h, head_h = self.GazeHeadNet_train((image_b_hat-self.mean)/self.std, True)
+        feature_t, gaze_t, head_t = self.GazeHeadNet_train((data['image_b']-self.mean)/self.std, True)
         losses_dict['redirection_feature_loss'] = 0
         for i in range(len(feature_h)):
             losses_dict['redirection_feature_loss'] += nn.functional.mse_loss(feature_h[i], feature_t[i].detach())
