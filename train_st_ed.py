@@ -755,7 +755,7 @@ if not config.skip_training:
             if config.use_tensorboard:
                 tensorboard.add_scalar('train/lr', lr, current_step)
         # Testing loop: every specified iterations compute the test statistics
-        if current_step % config.print_freq_test == 0:
+        if current_step % config.print_freq_test == 0 and current_step != 0:
             network.eval()
             network.clean_up()
             torch.cuda.empty_cache()
