@@ -258,15 +258,15 @@ def execute_training_step(current_step):
 def variance_of_laplacian(image):
     return cv2.Laplacian(image,cv2.CV_64F).var()
 
-def select_dataloader(name, subject, idx, img_dir, batch_size, num_images, num_workers, is_shuffle, evaluate):
+def select_dataloader(name, subject, idx, img_dir, batch_size, num_images, num_workers, is_shuffle):
     if name == "eth_xgaze":
-        return (name, subject, idx, xgaze_get_val_loader(data_dir=img_dir, batch_size=batch_size, num_val_images= num_images, num_workers= num_workers, is_shuffle= is_shuffle, subject=subject, evaluate=evaluate))
+        return (name, subject, idx, xgaze_get_val_loader(data_dir=img_dir, batch_size=batch_size, num_val_images= num_images, num_workers= num_workers, is_shuffle= is_shuffle, subject=subject))
     elif name == "mpii_face_gaze":
-        return (name, subject, idx, mpii_get_val_loader(data_dir=img_dir, batch_size=batch_size, num_val_images= num_images, num_workers= num_workers, is_shuffle= is_shuffle, subject=subject, evaluate=evaluate))
+        return (name, subject, idx, mpii_get_val_loader(data_dir=img_dir, batch_size=batch_size, num_val_images= num_images, num_workers= num_workers, is_shuffle= is_shuffle, subject=subject))
     elif name == "columbia":
-        return (name, subject, idx, columbia_get_val_loader(data_dir=img_dir, batch_size=batch_size, num_val_images= num_images, num_workers= num_workers, is_shuffle= is_shuffle, subject=subject, evaluate=evaluate))
+        return (name, subject, idx, columbia_get_val_loader(data_dir=img_dir, batch_size=batch_size, num_val_images= num_images, num_workers= num_workers, is_shuffle= is_shuffle, subject=subject))
     elif name == "gaze_capture":
-        return (name, subject, idx, gaze_capture_get_val_loader(data_dir=img_dir, batch_size=batch_size, num_val_images= num_images, num_workers= num_workers, is_shuffle= is_shuffle, subject=subject, evaluate=evaluate))
+        return (name, subject, idx, gaze_capture_get_val_loader(data_dir=img_dir, batch_size=batch_size, num_val_images= num_images, num_workers= num_workers, is_shuffle= is_shuffle, subject=subject))
     else:
         print("Dataset not supported")
 
