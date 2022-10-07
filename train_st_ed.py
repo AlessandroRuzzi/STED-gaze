@@ -312,10 +312,10 @@ def load_cams():
         "data/mpii_face_gaze/cam", "Camera" + str(i).zfill(2) + ".mat"
         )
         mat = scipy.io.loadmat(file_name)
-        cam_matrix["mpii_face_gaze"] = mat.get("cameraMatrix")
-        cam_distortion["mpii_face_gaze"] = mat.get(
+        cam_matrix["mpii_face_gaze"].append(mat.get("cameraMatrix"))
+        cam_distortion["mpii_face_gaze"].append(mat.get(
             "distCoeffs"
-    )
+        ))
 
     cam_file_name = "data/columbia/cam/cam" + str(0).zfill(2) + ".xml"
     fs = cv2.FileStorage(cam_file_name, cv2.FILE_STORAGE_READ)
