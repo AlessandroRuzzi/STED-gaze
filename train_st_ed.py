@@ -351,10 +351,10 @@ def execute_test(log, current_step):
     cam_matrix, cam_distortion, cam_translation, cam_rotation = load_cams()
 
 
-    path = "sted/checkpoints/epoch_24_resnet_60_subj_ckpt.pth.tar"
+    path = "xgaze_estimator_resnet/checkpoints/at_step_0140000.pth.tar"
     model = gaze_network_head().to(device)
     state_dict = torch.load(path, map_location=torch.device("cpu"))
-    model.load_state_dict(state_dict=state_dict['model_state'])
+    model.load_state_dict(state_dict=state_dict)
     model.eval()
     print("Done")
     
@@ -755,7 +755,7 @@ if not config.skip_training:
             if config.use_tensorboard:
                 tensorboard.add_scalar('train/lr', lr, current_step)
         # Testing loop: every specified iterations compute the test statistics
-        if current_step % config.print_freq_test == 0 and current_step != 0:
+        if current_step % config.print_freq_test == 0 :
             network.eval()
             network.clean_up()
             torch.cuda.empty_cache()
