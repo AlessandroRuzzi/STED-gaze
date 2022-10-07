@@ -351,7 +351,7 @@ def execute_test(log, current_step):
     cam_matrix, cam_distortion, cam_translation, cam_rotation = load_cams()
 
 
-    path = "xgaze_estimator_resnet/checkpoints/at_step_0140000.pth.tar"
+    path = "baseline_estimator_resnet/checkpoints/at_step_0140000.pth.tar"
     model = gaze_network_head().to(device)
     state_dict = torch.load(path, map_location=torch.device("cpu"))
     model.load_state_dict(state_dict=state_dict)
