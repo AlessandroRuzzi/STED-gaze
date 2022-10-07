@@ -29,7 +29,11 @@ from PIL import Image
 from torchvision import transforms
 from xgaze_dataloader import get_train_loader
 from xgaze_dataloader import get_val_loader as xgaze_get_val_loader
-from piq import ssim, psnr, LPIPS,DISTS
+from mpii_face_dataloader import get_val_loader as mpii_get_val_loader
+from columbia_dataloader import get_val_loader as columbia_get_val_loader
+from gaze_capture_dataloader import get_val_loader as gaze_capture_get_val_loader
+from standard_image_dataset import get_data_loader as image_get_data_loader
+from piq import ssim, psnr, LPIPS,DISTS, FID
 import torch.nn.functional as F
 from gaze_estimation_utils import normalize
 import scipy.io
@@ -146,7 +150,7 @@ if not config.skip_training:
                                   pin_memory=True,
                                   )
     """
-    train_dataset, train_dataloader = get_train_loader(data_dir = "/data/data2/aruzzi/train",batch_size=int(config.batch_size))
+    train_dataset, train_dataloader = get_train_loader(data_dir = "/data/data2/aruzzi/xgaze_subjects",batch_size=int(config.batch_size))
     all_data['gc/train'] = {'dataset': train_dataset, 'dataloader': train_dataloader}
 
     # Print some stats.
@@ -177,12 +181,12 @@ _ = saver.load_last_checkpoint()
 del saver
 
 saver = CheckpointsManager(network.GazeHeadNet_train, config.gazenet_savepath,device)
-_ = saver.load_last_checkpoint(xgaze=True)
+_ = saver.load_last_checkpoint()
 del saver
 
 if config.load_step != 0:
     #load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '.pt'),device)
-    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_partial.pt'),device)
+    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_full.pt'),device)
     logging.info("Loaded checkpoints from step " + str(config.load_step))
 
 # Transfer on the GPU before constructing and optimizer
@@ -254,15 +258,15 @@ def execute_training_step(current_step):
 def variance_of_laplacian(image):
     return cv2.Laplacian(image,cv2.CV_64F).var()
 
-def select_dataloader(name, subject, idx, img_dir, batch_size, num_images, num_workers, is_shuffle):
+def select_dataloader(name, subject, idx, img_dir, batch_size, num_images, num_workers, is_shuffle, evaluate):
     if name == "eth_xgaze":
-        return (name, subject, idx, xgaze_get_val_loader(data_dir=img_dir, batch_size=batch_size, num_val_images= num_images, num_workers= num_workers, is_shuffle= is_shuffle, subject=subject))
+        return (name, subject, idx, xgaze_get_val_loader(data_dir=img_dir, batch_size=batch_size, num_val_images= num_images, num_workers= num_workers, is_shuffle= is_shuffle, subject=subject, evaluate=evaluate))
     elif name == "mpii_face_gaze":
-        pass
+        return (name, subject, idx, mpii_get_val_loader(data_dir=img_dir, batch_size=batch_size, num_val_images= num_images, num_workers= num_workers, is_shuffle= is_shuffle, subject=subject, evaluate=evaluate))
     elif name == "columbia":
-        pass
+        return (name, subject, idx, columbia_get_val_loader(data_dir=img_dir, batch_size=batch_size, num_val_images= num_images, num_workers= num_workers, is_shuffle= is_shuffle, subject=subject, evaluate=evaluate))
     elif name == "gaze_capture":
-        pass
+        return (name, subject, idx, gaze_capture_get_val_loader(data_dir=img_dir, batch_size=batch_size, num_val_images= num_images, num_workers= num_workers, is_shuffle= is_shuffle, subject=subject, evaluate=evaluate))
     else:
         print("Dataset not supported")
 
@@ -270,9 +274,12 @@ def select_cam_matrix(name,cam_matrix,cam_distortion,cam_ind, subject):
     if name == "eth_xgaze":
         return cam_matrix[name][cam_ind], cam_distortion[name][cam_ind]
     elif name == "mpii_face_gaze":
-        return cam_matrix[name][int(subject[-5:-3])], cam_distortion[name][int(subject[-5:-3])]
+        camera_matrix = cam_matrix[name][int(subject[-5:-3])]
+        camera_matrix[0, 2] = 256.0
+        camera_matrix[1, 2] = 256.0
+        return camera_matrix, cam_distortion[name][int(subject[-5:-3])]
     elif name == "columbia":
-        pass
+        return cam_matrix[name], cam_distortion[name]
     elif name == "gaze_capture":
         pass
     else:
@@ -310,7 +317,20 @@ def load_cams():
             "distCoeffs"
     )
 
+    cam_file_name = "data/columbia/cam/cam" + str(0).zfill(2) + ".xml"
+    fs = cv2.FileStorage(cam_file_name, cv2.FILE_STORAGE_READ)
+    cam_matrix["columbia"] = fs.getNode("Camera_Matrix").mat()
+    cam_distortion["columbia"] = fs.getNode("Distortion_Coefficients").mat()
+
     return cam_matrix,cam_distortion, cam_translation, cam_rotation
+
+def calculate_FID(gt_images, pred_images):
+    first_dl, second_dl = image_get_data_loader(gt_images), image_get_data_loader(pred_images)
+    fid_metric = FID()
+    first_feats = fid_metric.compute_feats(first_dl)
+    second_feats = fid_metric.compute_feats(second_dl)
+    fid: torch.Tensor = fid_metric(first_feats, second_feats)
+    return fid
 
 def execute_test(log, current_step):
 
@@ -331,7 +351,7 @@ def execute_test(log, current_step):
     cam_matrix, cam_distortion, cam_translation, cam_rotation = load_cams()
 
 
-    path = "sted/checkpoints/epoch_24_head_ckpt.pth.tar"
+    path = "sted/checkpoints/epoch_24_resnet_60_subj_ckpt.pth.tar"
     model = gaze_network_head().to(device)
     state_dict = torch.load(path, map_location=torch.device("cpu"))
     model.load_state_dict(state_dict=state_dict['model_state'])
@@ -360,6 +380,12 @@ def execute_test(log, current_step):
     dict_blur_loss = {}
     dict_num_images = {}
 
+    dict_fid = {}
+    dict_gt_images = {}
+    dict_pred_images = {}
+    full_images_gt_list = []
+    full_images_pred_list = []
+
     for name in config.data_names:
         dict_angular_loss[name] = 0.0
         dict_angular_head_loss[name] = 0.0
@@ -381,6 +407,10 @@ def execute_test(log, current_step):
         dict_l2_loss[name] = 0.0
         dict_blur_loss[name] = 0.0
         dict_num_images[name] = 0
+
+        dict_fid[name] = 0.0
+        dict_gt_images[name] = []
+        dict_pred_images[name] = []
     
     for name, subject, index_dataset, dataloader in dataloader_all:
     
@@ -404,6 +434,10 @@ def execute_test(log, current_step):
         l2_loss = 0.0
         blur_loss = 0.0
         num_images = 0
+
+        fid = 0.0
+        gt_list = []
+        pred_list = []
 
         for index,entry in enumerate(dataloader):
             print(index)
@@ -544,6 +578,15 @@ def execute_test(log, current_step):
             dict_angular_head_loss[name] += loss
             print("Head Angular Error: ",angular_head_loss/num_images,loss,num_images)
 
+            gt_list.append(target_normalized[0,:])
+            pred_list.append(pred_normalized[0,:])
+
+            dict_gt_images[name].append(target_normalized[0,:])
+            dict_pred_images[name].append(pred_normalized[0,:])
+
+            full_images_gt_list.append(target_normalized[0,:])
+            full_images_pred_list.append(pred_normalized[0,:])
+
             loss = ssim(target_normalized, pred_normalized, data_range=1.).detach().cpu().numpy()
             ssim_loss += loss
             dict_ssim_loss[name] += loss
@@ -659,14 +702,22 @@ def execute_test(log, current_step):
             if index % log == 0:
                 log_evaluation_image(pred_normalized, target_normalized, ((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0).astype(np.uint8), image_gt, image_gen,  face_images_norm, face_images_norm_pre, eye_images_norm, eye_images_norm_pre)
 
+        fid = calculate_FID(gt_images= gt_list, pred_images= pred_list)
+
         if index % log == 0:
             log_one_subject_evaluation_results(current_step, angular_loss, angular_head_loss, ssim_loss, psnr_loss, lpips_loss, dists_loss, 
                                                 ssim_eye_loss, psnr_eye_loss, lpips_eye_loss, blur_eye_loss, ssim_face_loss, psnr_face_loss, lpips_face_loss, blur_face_loss,
-                                                l1_loss, l2_loss, blur_loss, num_images )
+                                                l1_loss, l2_loss, blur_loss, num_images, fid )
+
+    for name in config.data_names:
+        dict_fid[name]  = calculate_FID(gt_images= dict_gt_images[name], pred_images= dict_pred_images[name])
+        
+    full_fid = calculate_FID(gt_images= full_images_gt_list, pred_images= full_images_pred_list)    
+                            
     if index % log == 0:
         log_all_datasets_evaluation_results(current_step, config.data_names, dict_angular_loss, dict_angular_head_loss, dict_ssim_loss, dict_psnr_loss, dict_lpips_loss, dict_dists_loss, 
                                                 dict_ssim_eye_loss, dict_psnr_eye_loss, dict_lpips_eye_loss, dict_blur_eye_loss, dict_ssim_face_loss, dict_psnr_face_loss, dict_lpips_face_loss, dict_blur_face_loss,
-                                                dict_l1_loss, dict_l2_loss, dict_blur_loss, dict_num_images)
+                                                dict_l1_loss, dict_l2_loss, dict_blur_loss, dict_num_images,dict_fid, full_fid)
 
 
 def execute_visualize(data):
@@ -704,7 +755,7 @@ if not config.skip_training:
             if config.use_tensorboard:
                 tensorboard.add_scalar('train/lr', lr, current_step)
         # Testing loop: every specified iterations compute the test statistics
-        if current_step % config.print_freq_test == 0 and current_step != 0:
+        if current_step % config.print_freq_test == 0:
             network.eval()
             network.clean_up()
             torch.cuda.empty_cache()

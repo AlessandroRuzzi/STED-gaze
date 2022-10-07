@@ -120,7 +120,7 @@ class GazeDataset(Dataset):
         assert len(self.selected_keys) > 0
 
         for num_i in range(0, len(self.selected_keys)):
-            file_path = os.path.join(self.path,"xgaze_" + self.selected_keys[num_i])
+            file_path = os.path.join(self.path,"mpii_" + self.selected_keys[num_i])
             self.hdfs[num_i] = h5py.File(file_path, 'r', swmr=True)
             # print('read file: ', os.path.join(self.path, self.selected_keys[num_i]))
             assert self.hdfs[num_i].swmr_mode
@@ -190,7 +190,7 @@ class GazeDataset(Dataset):
 
         #self.hdf = h5py.File(os.path.join(self.path,"xgaze_" + self.selected_keys[key]), 'r', swmr=True)
 
-        self.hdf_nerf = h5py.File(os.path.join(self.path,"xgaze_" + self.selected_keys[key]), 'r', swmr=True) #TODO check the path
+        self.hdf_nerf = h5py.File(os.path.join(self.path,"mpii_" + self.selected_keys[key]), 'r', swmr=True) #TODO check the path
         assert self.hdf_nerf.swmr_mode
 
         # Get face image

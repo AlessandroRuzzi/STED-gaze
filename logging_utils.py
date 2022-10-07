@@ -155,7 +155,7 @@ def log_simple_image(img, description):
 
 def log_one_subject_evaluation_results(current_step, angular_loss, angular_head_loss, ssim_loss, psnr_loss, lpips_loss, dists_loss,
                                         ssim_eye_loss, psnr_eye_loss, lpips_eye_loss, blur_eye_loss, ssim_face_loss, psnr_face_loss, lpips_face_loss, blur_face_loss,
-                                         l1_loss, l2_loss, blur_loss, num_images ):
+                                         l1_loss, l2_loss, blur_loss, num_images, fid ):
     wandb.log(
                 {
                     "Current_Step": current_step,
@@ -178,12 +178,14 @@ def log_one_subject_evaluation_results(current_step, angular_loss, angular_head_
                     "Subject L1 Distance: ": l1_loss / num_images,
                     "Subject L2 Distance: ": l2_loss / num_images,
                     "Subject Image Blurriness: ": blur_loss / num_images,
+
+                    "Subject FID: ": fid,
                 }
             )
 
 def log_all_datasets_evaluation_results(current_step, data_names, dict_angular_loss, dict_angular_head_loss, dict_ssim_loss, dict_psnr_loss, dict_lpips_loss, dict_dists_loss, 
                                         dict_ssim_eye_loss, dict_psnr_eye_loss, dict_lpips_eye_loss, dict_blur_eye_loss, dict_ssim_face_loss, dict_psnr_face_loss, dict_lpips_face_loss, dict_blur_face_loss,
-                                        dict_l1_loss, dict_l2_loss, dict_blur_loss, dict_num_images):
+                                        dict_l1_loss, dict_l2_loss, dict_blur_loss, dict_num_images, dict_fid, full_fid):
 
     angular_loss = 0.0
     angular_head_loss = 0.0
@@ -250,6 +252,8 @@ def log_all_datasets_evaluation_results(current_step, data_names, dict_angular_l
                     name + " L1 Distance: ": dict_l1_loss[name] / dict_num_images[name],
                     name + " L2 Distance: ": dict_l2_loss[name] / dict_num_images[name],
                     name + " Image Blurriness: ": dict_blur_loss[name] / dict_num_images[name],
+
+                    name + " FID: ": dict_fid[name],
                 }
             )
     wandb.log(
@@ -274,6 +278,8 @@ def log_all_datasets_evaluation_results(current_step, data_names, dict_angular_l
                     " FULL L1 Distance: ": l1_loss / num_images,
                     " FULL L2 Distance: ": l2_loss / num_images,
                     " FULL Image Blurriness: ": blur_loss / num_images,
+
+                    " FULL FID: ": full_fid,
                 }
             )
     
