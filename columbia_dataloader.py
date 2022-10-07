@@ -34,7 +34,7 @@ def get_train_loader(data_dir,
                            is_shuffle=True,
                            subject = None):
     # load dataset
-    refer_list_file = 'data/eth_xgaze/train_test_split.json'
+    refer_list_file = 'data/columbia/train_test_split.json'
     print('load the train file list from: ', refer_list_file)
 
     with open(refer_list_file, 'r') as f:
@@ -58,7 +58,7 @@ def get_val_loader(data_dir,
                            is_shuffle=True,
                            subject = None):
     # load dataset
-    refer_list_file = 'data/eth_xgaze/train_test_split.json'
+    refer_list_file = 'data/columbia/train_test_split.json'
     print('load the val file list from: ', refer_list_file)
 
     with open(refer_list_file, 'r') as f:
