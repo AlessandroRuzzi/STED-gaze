@@ -17,6 +17,7 @@ import random
 from torch.utils.data import DataLoader, Subset
 import logging
 from dataset import HDFDataset
+from models.gazeheadResnet import GazeHeadResNet
 from utils import save_images, worker_init_fn, send_data_dict_to_gpu, recover_images, def_test_list, RunningStatistics,\
     adjust_learning_rate, script_init_common, get_example_images, save_model, load_model
 from core import DefaultConfig
@@ -352,7 +353,7 @@ def execute_test(log, current_step):
 
 
     path = "baseline_estimator_resnet/checkpoints/at_step_0140000.pth.tar"
-    model = gaze_network_head().to(device)
+    model = GazeHeadResNet().to(device)
     state_dict = torch.load(path, map_location=torch.device("cpu"))
     model.load_state_dict(state_dict=state_dict)
     model.eval()
