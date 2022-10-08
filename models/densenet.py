@@ -142,13 +142,13 @@ class DenseNetDecoderLastLayers(nn.Module):
                  normalization_fn=nn.BatchNorm2d):
         super(DenseNetDecoderLastLayers, self).__init__()
         # First deconv
-        self.conv1 = nn.ConvTranspose2d(c_in, 4 * 4 *growth_rate, bias=False,
+        self.conv1 = nn.ConvTranspose2d(c_in, 4  *growth_rate, bias=False,
                                         kernel_size=3, stride=2, padding=1,
                                         output_padding=1)
         nn.init.kaiming_normal_(self.conv1.weight.data)
 
         # Second deconv
-        c_in = 4 * 4 * growth_rate
+        c_in = 4  * growth_rate
         self.norm2 = normalization_fn(c_in, track_running_stats=False).to(device)
         self.act = activation_fn(inplace=True)
         self.conv2 = nn.ConvTranspose2d(c_in, 2 * growth_rate, bias=False,
@@ -157,7 +157,7 @@ class DenseNetDecoderLastLayers(nn.Module):
         nn.init.kaiming_normal_(self.conv2.weight.data)
 
         # Final conv
-        c_in = 2 * 4 * growth_rate
+        c_in = 2 * growth_rate
         c_out = 3
         self.norm3 = normalization_fn(c_in, track_running_stats=False).to(device)
         self.conv3 = nn.Conv2d(c_in, c_out, bias=False,
@@ -167,15 +167,11 @@ class DenseNetDecoderLastLayers(nn.Module):
 
     def forward(self, x, from_enc=None):
         print("decoder")
-        print(x.shape)
         x = self.conv1(x)
-        print(x.shape)
         if from_enc is not None:
             x = torch.cat([x, from_enc], 1)
-        #
-        print(x.shape)
+        
         x = self.norm2(x)
-        print(x.shape)
         x = self.act(x)
         print(x.shape)
         x = self.conv2(x)
