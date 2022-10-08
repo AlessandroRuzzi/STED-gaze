@@ -166,23 +166,17 @@ class DenseNetDecoderLastLayers(nn.Module):
         self.c_now = c_out
 
     def forward(self, x, from_enc=None):
-        print("decoder")
         x = self.conv1(x)
         if from_enc is not None:
             x = torch.cat([x, from_enc], 1)
         
         x = self.norm2(x)
         x = self.act(x)
-        print(x.shape)
         x = self.conv2(x)
-        print(x.shape)
         #
         x = self.norm3(x)
-        print(x.shape)
         x = self.act(x)
-        print(x.shape)
         x = self.conv3(x)
-        print(x.shape)
         return x
 
 
