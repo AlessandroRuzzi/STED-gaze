@@ -182,7 +182,7 @@ _ = saver.load_last_checkpoint()
 del saver
 
 saver = CheckpointsManager(network.GazeHeadNet_train, config.gazenet_savepath,device)
-_ = saver.load_last_checkpoint(xgaze=True)
+_ = saver.load_last_checkpoint()
 del saver
 
 if config.load_step != 0:
