@@ -59,6 +59,7 @@ class DenseNetDecoder(nn.Module):
 
         assert (num_layers_per_block % 2) == 0
         c_now = c_in
+        print(c_now)
         for i in range(num_blocks):
             i_ = i + 1
             # Define dense block
@@ -83,6 +84,8 @@ class DenseNetDecoder(nn.Module):
                 ))
                 c_now = list(self.children())[-1].c_now
                 c_now += c_to_concat[i]
+
+        print(c_now)
 
         # Last up-sampling conv layers
         self.last = DenseNetDecoderLastLayers(c_now,
