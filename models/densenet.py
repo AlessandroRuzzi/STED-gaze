@@ -148,7 +148,7 @@ class DenseNetDecoderLastLayers(nn.Module):
         nn.init.kaiming_normal_(self.conv1.weight.data)
 
         # Second deconv
-        c_in = 4 * growth_rate
+        c_in = 4 * 4 * growth_rate
         self.norm2 = normalization_fn(c_in, track_running_stats=False).to(device)
         self.act = activation_fn(inplace=True)
         self.conv2 = nn.ConvTranspose2d(c_in, 2 * growth_rate, bias=False,
