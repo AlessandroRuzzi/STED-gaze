@@ -151,13 +151,13 @@ class DenseNetDecoderLastLayers(nn.Module):
         c_in = 4 * 4 * growth_rate
         self.norm2 = normalization_fn(c_in, track_running_stats=False).to(device)
         self.act = activation_fn(inplace=True)
-        self.conv2 = nn.ConvTranspose2d(c_in, 2 * growth_rate, bias=False,
+        self.conv2 = nn.ConvTranspose2d(c_in, 2 * 4 * growth_rate, bias=False,
                                         kernel_size=3, stride=2, padding=1,
                                         output_padding=1)
         nn.init.kaiming_normal_(self.conv2.weight.data)
 
         # Final conv
-        c_in = 2*growth_rate
+        c_in = 2* 4 *growth_rate
         c_out = 3
         self.norm3 = normalization_fn(c_in, track_running_stats=False).to(device)
         self.conv3 = nn.Conv2d(c_in, c_out, bias=False,
