@@ -35,11 +35,16 @@ class Decoder(nn.Module):
             self.fc_dec = nn.Linear(num_all_embedding_features, decoder_input_c * np.prod(self.bottleneck_shape))
 
     def forward(self, embeddings):
+        print(embeddings.shape)
         x = torch.cat([e.reshape(e.shape[0], -1) for e in embeddings], dim=-1)
+        print(x.shape)
         if self.use_fc:
             x = self.fc_dec(x)
+        print(x.shape)    
         x = x.view(-1, self.decoder_input_c, *self.bottleneck_shape)
+        print(x.shape)
         x = self.decoder(x)
+        print(x.shape)
         return x
 
 
