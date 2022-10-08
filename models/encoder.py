@@ -43,8 +43,6 @@ class Encoder(nn.Module):
 
     def forward(self, image):
         x = self.encoder(image)
-        print(image.shape)
-        print(x.shape)
         batch_size = x.shape[0]
         x = x.view(batch_size, -1)
         # Create latent codes

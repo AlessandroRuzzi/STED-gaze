@@ -142,8 +142,8 @@ class DenseNetDecoderLastLayers(nn.Module):
                  normalization_fn=nn.BatchNorm2d):
         super(DenseNetDecoderLastLayers, self).__init__()
         # First deconv
-        self.conv1 = nn.ConvTranspose2d(c_in, 4  *growth_rate, bias=False,
-                                        kernel_size=3, stride=2, padding=1,
+        self.conv1 = nn.ConvTranspose2d(c_in,  4 *growth_rate, bias=False,
+                                        kernel_size=3, stride=3, padding=1,
                                         output_padding=1)
         nn.init.kaiming_normal_(self.conv1.weight.data)
 
@@ -152,7 +152,7 @@ class DenseNetDecoderLastLayers(nn.Module):
         self.norm2 = normalization_fn(c_in, track_running_stats=False).to(device)
         self.act = activation_fn(inplace=True)
         self.conv2 = nn.ConvTranspose2d(c_in, 2 * growth_rate, bias=False,
-                                        kernel_size=3, stride=2, padding=1,
+                                        kernel_size=3, stride=3, padding=1,
                                         output_padding=1)
         nn.init.kaiming_normal_(self.conv2.weight.data)
 
