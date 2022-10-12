@@ -40,7 +40,7 @@ class Decoder(nn.Module):
             x = self.fc_dec(x)
         print("start decoder")
         print(x.shape)
-        x = x.view(-1, self.decoder_input_c, *self.bottleneck_shape)
+        x = x.view(-1, 8, 8)
         print(x.shape)
         x = self.decoder(x)
         return x
