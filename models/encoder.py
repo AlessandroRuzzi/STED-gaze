@@ -31,7 +31,7 @@ class Encoder(nn.Module):
         self.tanh = nn.Tanh()
         self.leakyrelu = nn.LeakyReLU()
         self.encoder_fc_embeddings1 = nn.Linear(c_now * 4 * 16, c_now * 4)
-        self.encoder_fc_embeddings2 = nn.Linear(c_now * 4 , int(num_all_embedding_features))
+        self.encoder_fc_embeddings2 = nn.Linear(c_now * 4 , int(num_all_embedding_features * 4))
 
         self.encoder_fc_pseudo_labels2.weight.data.fill_(0)
         self.encoder_fc_pseudo_labels2.bias.data.fill_(0)

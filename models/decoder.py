@@ -38,7 +38,9 @@ class Decoder(nn.Module):
         x = torch.cat([e.reshape(e.shape[0], -1) for e in embeddings], dim=-1)
         if self.use_fc:
             x = self.fc_dec(x)
+        print(x.shape)
         x = x.view(-1, self.decoder_input_c, *self.bottleneck_shape)
+        print(x.shape)
         x = self.decoder(x)
         return x
 
