@@ -230,8 +230,8 @@ class STED(nn.Module):
         if config.use_apex:
             from apex import amp
         losses_dict = OrderedDict()
-        for param in self.discriminator.parameters():
-            param.requires_grad = True
+        #for param in self.discriminator.parameters():
+        #    param.requires_grad = True
         for param in self.generator_params:
             param.requires_grad = True
 
@@ -257,25 +257,25 @@ class STED(nn.Module):
 
 
         # optimize discriminator
-        real = self.discriminator(data['image_b'])
-        fake = self.discriminator(image_b_hat.detach())
+        #real = self.discriminator(data['image_b'])
+        #fake = self.discriminator(image_b_hat.detach())
 
-        losses_dict['discriminator'] = losses.discriminator_loss(real=real, fake=fake)
-        losses_dict['generator'] = losses.generator_loss(fake=fake)
-        discriminator_loss = losses_dict['discriminator'] * config.coeff_discriminator_loss
+        #losses_dict['discriminator'] = losses.discriminator_loss(real=real, fake=fake)
+        #losses_dict['generator'] = losses.generator_loss(fake=fake)
+        #discriminator_loss = losses_dict['discriminator'] * config.coeff_discriminator_loss
         # Warm up period for generator losses
-        losses_dict['discrim_coeff'] = torch.tensor(max(min(1.0, current_step / 20000.0), 0.0))
+        #losses_dict['discrim_coeff'] = torch.tensor(max(min(1.0, current_step / 20000.0), 0.0))
 
-        self.discriminator_optimizer.zero_grad()
-        if config.use_apex:
-            with amp.scale_loss(discriminator_loss, self.discriminator_optimizer) as scaled_loss:
-                scaled_loss.backward()
-        else:
-            discriminator_loss.backward()
-        self.discriminator_optimizer.step()
+        #self.discriminator_optimizer.zero_grad()
+        #if config.use_apex:
+        #    with amp.scale_loss(discriminator_loss, self.discriminator_optimizer) as scaled_loss:
+        #        scaled_loss.backward()
+        #else:
+        #    discriminator_loss.backward()
+        #self.discriminator_optimizer.step()
 
-        for param in self.discriminator.parameters():
-            param.requires_grad = False
+        #for param in self.discriminator.parameters():
+        #    param.requires_grad = False
 
         # for generator update
 
@@ -296,9 +296,9 @@ class STED(nn.Module):
         total_loss += (losses_dict['gaze_a'] + losses_dict['head_a']) * config.coeff_gaze_loss
 
 
-        fake = self.discriminator(image_b_hat)
-        generator_loss = losses.generator_loss(fake=fake)
-        total_loss += generator_loss * config.coeff_discriminator_loss * losses_dict['discrim_coeff']
+        #fake = self.discriminator(image_b_hat)
+        #generator_loss = losses.generator_loss(fake=fake)
+        #total_loss += generator_loss * config.coeff_discriminator_loss * losses_dict['discrim_coeff']
 
         if config.coeff_embedding_consistency_loss != 0:
             normalized_embeddings_from_a = self.rotate(embeddings_a, pseudo_labels_a, inverse=True)
