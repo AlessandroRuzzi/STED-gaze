@@ -135,10 +135,15 @@ class GazeDataset(Dataset):
                     n= 50*18
                     #n = self.hdfs[num_i]["face_patch"].shape[0]
                 
-                #self.idx_to_kv += [(num_i, i) for i in range(n) if i % 18 not in [11, 12, 14, 15]]
+                #self.idx_to_kv += [
+                #    (num_i, i) for i in range(n)
+                #]  
                 self.idx_to_kv += [
-                    (num_i, i) for i in range(n)
+                    (num_i, i) for i in range(43*18)
                 ]  
+                self.idx_to_kv += [
+                    (num_i, i) for i in range(self.hdfs[num_i]["face_patch"].shape[0]-1, self.hdfs[num_i]["face_patch"].shape[0] - 1 - 7*18, -1)
+                ] 
                 
         else:
             print('load the file: ', index_file)
@@ -198,7 +203,7 @@ class GazeDataset(Dataset):
         #image = image[:, :, [2, 1, 0]]  # from BGR to RGB
         image = self.preprocess_image(image)
         image = self.preprocess_entry(image)
-        #image = self.transform(image)
+        image = self.transform(image)
 
         # Get labels
         if self.is_load_label:
@@ -230,7 +235,7 @@ class GazeDataset(Dataset):
                 #image = image[:, :, [2, 1, 0]]  # from BGR to RGB
                 image = self.preprocess_image(image)
                 image = self.preprocess_entry(image)
-                #image = self.transform(image)
+                image = self.transform(image)
 
                 gaze_label = self.hdf_nerf["pitchyaw_head"][idx_b, :]
                 #gaze_label = self.hdf["face_gaze"][idx_b, :]
