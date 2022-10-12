@@ -26,11 +26,11 @@ class Encoder(nn.Module):
         self.encoder = DenseNetEncoder(num_blocks=config.densenet_blocks)
         c_now = list(self.children())[-1].c_now
 
-        self.encoder_fc_pseudo_labels1 = nn.Linear(c_now * 4 * 16, 96)
+        self.encoder_fc_pseudo_labels1 = nn.Linear(c_now * 4 , 96)
         self.encoder_fc_pseudo_labels2 = nn.Linear(96, int(num_all_pseudo_labels))
         self.tanh = nn.Tanh()
         self.leakyrelu = nn.LeakyReLU()
-        self.encoder_fc_embeddings1 = nn.Linear(c_now * 4 * 16, c_now * 4)
+        self.encoder_fc_embeddings1 = nn.Linear(c_now * 4 , c_now * 4)
         self.encoder_fc_embeddings2 = nn.Linear(c_now * 4 , int(num_all_embedding_features * 4))
 
         self.encoder_fc_pseudo_labels2.weight.data.fill_(0)
