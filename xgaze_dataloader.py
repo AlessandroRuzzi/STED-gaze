@@ -203,7 +203,7 @@ class GazeDataset(Dataset):
         #image = image[:, :, [2, 1, 0]]  # from BGR to RGB
         image = self.preprocess_image(image)
         image = self.preprocess_entry(image)
-        image = self.transform(image)
+        #image = self.transform(image)
 
         # Get labels
         if self.is_load_label:
@@ -235,7 +235,7 @@ class GazeDataset(Dataset):
                 #image = image[:, :, [2, 1, 0]]  # from BGR to RGB
                 image = self.preprocess_image(image)
                 image = self.preprocess_entry(image)
-                image = self.transform(image)
+                #image = self.transform(image)
 
                 gaze_label = self.hdf_nerf["pitchyaw_head"][idx_b, :]
                 #gaze_label = self.hdf["face_gaze"][idx_b, :]
