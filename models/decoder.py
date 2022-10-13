@@ -23,7 +23,8 @@ class Decoder(nn.Module):
 
         # Define feature map dimensions at bottleneck
         self.bottleneck_shape = (2, 8) if config.densenet_blocks == 4 else (2, 2)
-        decoder_input_c = int(num_all_embedding_features / np.prod(self.bottleneck_shape))
+        #decoder_input_c = int(num_all_embedding_features / np.prod(self.bottleneck_shape))
+        decoder_input_c = 84
         self.decoder_input_c = decoder_input_c
         self.decoder = DenseNetDecoder(
             self.decoder_input_c,
@@ -94,6 +95,7 @@ class DenseNetDecoder(nn.Module):
     def forward(self, x):
         # Apply initial layers and dense blocks
         for name, module in self.named_children():
+            print(name)
             x = module(x)
         return x
 
