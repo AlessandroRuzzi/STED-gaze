@@ -26,7 +26,7 @@ class Decoder(nn.Module):
         decoder_input_c = int(num_all_embedding_features / np.prod(self.bottleneck_shape))
         self.decoder_input_c = decoder_input_c
         self.decoder = DenseNetDecoder(
-            336,
+            self.decoder_input_c,
             num_blocks=config.densenet_blocks,
             compression_factor= 1.0,
         )
