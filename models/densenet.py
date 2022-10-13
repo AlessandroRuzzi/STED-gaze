@@ -56,7 +56,6 @@ class DenseNetBlock(nn.Module):
                     normalization_fn=normalization_fn,
                     use_style=use_style,
                 ))
-            print("cnow try", c_now)
             self.add_module('compo%d' % i_, DenseNetCompositeLayer(
                 4 * growth_rate if use_bottleneck else c_now, growth_rate, z_dim_app=z_dim_app,
                 kernel_size=3, p_dropout=p_dropout,
@@ -79,7 +78,6 @@ class DenseNetBlock(nn.Module):
             else:
                 x = module(x)
             if name.startswith('compo'):
-                print(x.shape, x_before.shape)
                 x = torch.cat([x_before, x], dim=1)
         return x
 

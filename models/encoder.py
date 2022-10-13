@@ -42,12 +42,9 @@ class Encoder(nn.Module):
         '''
 
     def forward(self, image):
-        print("start encoder")
         x = self.encoder(image)
-        print(x.shape)
         batch_size = x.shape[0]
         x = x.view(batch_size, -1)
-        print(x.shape)
         # Create latent codes
         #flat_pseudo_labels = 0.5 * np.pi * self.tanh(self.encoder_fc_pseudo_labels(x))
         #flat_embeddings = self.encoder_fc_embeddings(x)
@@ -70,10 +67,8 @@ class Encoder(nn.Module):
         idx_e = 0
         for dof, num_feats in self.configuration:
             len_embedding = (dof + 1) * num_feats
-            print(len_embedding)
             flat_embedding = flat_embeddings[:, idx_e:(idx_e + len_embedding)]
             embedding = flat_embedding.reshape(-1, dof + 1, num_feats)
-            print(embedding.shape)
             # embedding = nn.functional.normalize(embedding, dim=2)
             embeddings.append(embedding)
             idx_e += len_embedding
