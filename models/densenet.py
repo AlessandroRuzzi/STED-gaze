@@ -57,7 +57,7 @@ class DenseNetBlock(nn.Module):
                     use_style=use_style,
                 ))
             self.add_module('compo%d' % i_, DenseNetCompositeLayer(
-                4 * growth_rate if use_bottleneck else c_now, growth_rate, z_dim_app=z_dim_app,
+                336 if use_bottleneck else c_now, growth_rate, z_dim_app=z_dim_app,
                 kernel_size=3, p_dropout=p_dropout,
                 activation_fn=activation_fn,
                 normalization_fn=normalization_fn,
