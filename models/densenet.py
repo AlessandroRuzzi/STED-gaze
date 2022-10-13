@@ -79,6 +79,7 @@ class DenseNetBlock(nn.Module):
             else:
                 x = module(x)
             if name.startswith('compo'):
+                print(x.shape, x_before.shape)
                 x = torch.cat([x_before, x], dim=1)
         return x
 
