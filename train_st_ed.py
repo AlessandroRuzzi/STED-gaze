@@ -220,7 +220,7 @@ def execute_training_step(current_step):
     # forward + backward + optimize
     loss_dict, generated = network.optimize(input, current_step)
 
-    if current_step % 1000 == 0:
+    if current_step % 30 == 0:
         #print(input['image_a'].shape)
         #print(input['image_b'].shape)
         #print(generated.shape)
