@@ -231,18 +231,6 @@ def execute_training_step(current_step):
         #log_image.show()
         wandb.log({"Sted Prediction": log_image})
 
-    # save training samples in tensorboard
-    if config.use_tensorboard and current_step % config.save_freq_images == 0 and current_step != 0:
-        for image_index in range(5):
-            tensorboard.add_image('train/input_image',
-                                  torch.clamp((input['image_a'][image_index] + 1) * (255.0 / 2.0), 0, 255).type(
-                                      torch.cuda.ByteTensor), current_step)
-            tensorboard.add_image('train/target_image',
-                                  torch.clamp((input['image_b'][image_index] + 1) * (255.0 / 2.0), 0, 255).type(
-                                      torch.cuda.ByteTensor), current_step)
-            tensorboard.add_image('train/generated_image',
-                                  torch.clamp((generated[image_index] + 1) * (255.0 / 2.0), 0, 255).type(
-                                      torch.cuda.ByteTensor), current_step)
     # If doing multi-GPU training, just take an average
     for key, value in loss_dict.items():
         if value.dim() > 0:
