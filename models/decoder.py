@@ -23,11 +23,10 @@ class Decoder(nn.Module):
 
         # Define feature map dimensions at bottleneck
         self.bottleneck_shape = (2, 8) if config.densenet_blocks == 4 else (2, 2)
-        #decoder_input_c = int(num_all_embedding_features / np.prod(self.bottleneck_shape))
-        decoder_input_c = 84
+        decoder_input_c = int(num_all_embedding_features / np.prod(self.bottleneck_shape))
         self.decoder_input_c = decoder_input_c
         self.decoder = DenseNetDecoder(
-            self.decoder_input_c,
+            84,
             num_blocks=config.densenet_blocks,
             compression_factor= 1.0,
         )
