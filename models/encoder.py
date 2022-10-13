@@ -51,7 +51,6 @@ class Encoder(nn.Module):
         flat_pseudo_labels = 0.5 * np.pi * self.tanh(self.encoder_fc_pseudo_labels2(
             self.leakyrelu(self.encoder_fc_pseudo_labels1(x))))
         flat_embeddings = self.encoder_fc_embeddings2(self.leakyrelu(self.encoder_fc_embeddings1(x)))
-        print(flat_embeddings.shape)
         # Split the pseudo labels and embeddings up
         pseudo_labels = []
         idx_pl = 0
