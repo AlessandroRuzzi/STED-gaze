@@ -21,7 +21,6 @@ from models.gazeheadResnet import GazeHeadResNet
 from utils import save_images, worker_init_fn, send_data_dict_to_gpu, recover_images, def_test_list, RunningStatistics,\
     adjust_learning_rate, script_init_common, get_example_images, save_model, load_model
 from core import DefaultConfig
-from models.xgaze_baseline import gaze_network
 from models.xgaze_baseline_head import gaze_network_head
 from models import STED
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
@@ -41,24 +40,13 @@ import scipy.io
 from logging_utils import log_evaluation_image, log_one_subject_evaluation_results, log_all_datasets_evaluation_results
 
 trans = transforms.Compose([
-        #transforms.ToPILImage(),
-        #transforms.ToTensor(),  # this also convert pixel value from [0,255] to [0,1]
-        #transforms.Normalize(mean=[0.485, 0.456, 0.406],
-        #                     std=[0.229, 0.224, 0.225]),
-        #transforms.Resize(size=(128,128)),
-    ])
-
-trans_eval = transforms.Compose([
         transforms.ToPILImage(),
         transforms.ToTensor(),  # this also convert pixel value from [0,255] to [0,1]
-        transforms.Resize(size=(128,128)),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225]),
+        transforms.Resize(size=(224,224)),
     ])
 
-trans_normalize = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.ToTensor(), 
-        transforms.Resize(size=(512,512)),
-    ])
 torch.manual_seed(45)  # cpu
 torch.cuda.manual_seed(55)  # gpu
 np.random.seed(65)  # numpy
@@ -340,33 +328,21 @@ def execute_test(log, current_step):
     cam_matrix, cam_distortion, cam_translation, cam_rotation = load_cams()
 
 
-    path = "baseline_estimator_resnet/checkpoints/at_step_0140000.pth.tar"
-    model = GazeHeadResNet().to(device)
+    path = "sted/checkpoints/epoch_24_head_ckpt.pth.tar"
+    model = gaze_network_head().to(device)
+
     state_dict = torch.load(path, map_location=torch.device("cpu"))
-    model.load_state_dict(state_dict=state_dict)
+    model.load_state_dict(state_dict=state_dict["model_state"])
     model.eval()
+
     print("Done")
-    
 
     dict_angular_loss = {}
     dict_angular_head_loss = {}
     dict_ssim_loss = {}
     dict_psnr_loss = {}
     dict_lpips_loss = {}
-
-    dict_ssim_eye_loss = {}
-    dict_psnr_eye_loss = {}
-    dict_lpips_eye_loss = {}
-    dict_blur_eye_loss = {}
-    dict_ssim_face_loss = {}
-    dict_psnr_face_loss = {}
-    dict_lpips_face_loss = {}
-    dict_blur_face_loss = {}
-
-    dict_dists_loss = {}
     dict_l1_loss = {}
-    dict_l2_loss = {}
-    dict_blur_loss = {}
     dict_num_images = {}
 
     dict_fid = {}
@@ -381,20 +357,7 @@ def execute_test(log, current_step):
         dict_ssim_loss[name] = 0.0
         dict_psnr_loss[name] = 0.0
         dict_lpips_loss[name] = 0.0
-        dict_dists_loss[name] = 0.0
-
-        dict_ssim_eye_loss[name] = 0.0
-        dict_psnr_eye_loss[name] = 0.0
-        dict_lpips_eye_loss[name] = 0.0
-        dict_blur_eye_loss[name] = 0.0
-        dict_ssim_face_loss[name] = 0.0
-        dict_psnr_face_loss[name] = 0.0
-        dict_lpips_face_loss[name] = 0.0
-        dict_blur_face_loss[name] = 0.0
-
         dict_l1_loss[name] = 0.0
-        dict_l2_loss[name] = 0.0
-        dict_blur_loss[name] = 0.0
         dict_num_images[name] = 0
 
         dict_fid[name] = 0.0
@@ -408,20 +371,7 @@ def execute_test(log, current_step):
         ssim_loss = 0.0
         psnr_loss = 0.0
         lpips_loss = 0.0
-        dists_loss = 0.0
-
-        ssim_eye_loss = 0.0
-        psnr_eye_loss = 0.0
-        lpips_eye_loss = 0.0
-        blur_eye_loss = 0.0
-        ssim_face_loss = 0.0
-        psnr_face_loss = 0.0
-        lpips_face_loss = 0.0
-        blur_face_loss = 0.0
-
         l1_loss = 0.0
-        l2_loss = 0.0
-        blur_loss = 0.0
         num_images = 0
 
         fid = 0.0
@@ -432,8 +382,6 @@ def execute_test(log, current_step):
             print(index)
             ldms = entry["ldms_b"][0]
             batch_head_mask = torch.reshape(entry["mask_b"], (1, 1, 512, 512))
-            batch_left_eye_mask = torch.reshape(entry["left_eye_b"], (1, 1, 512, 512))
-            batch_right_eye_mask = torch.reshape(entry["right_eye_b"], (1, 1, 512, 512))
             cam_ind = entry["cam_ind_b"]
 
             camera_matrix, camera_distortion = select_cam_matrix(name, cam_matrix,cam_distortion, cam_ind, subject)
@@ -444,24 +392,17 @@ def execute_test(log, current_step):
             image_gt = ((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0).astype(np.uint8)
             image_gen = np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
 
-            batch_images_gt = trans_normalize(image_gt[0,:])
-            nonhead_mask = batch_head_mask < 0.5
-            nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)
-            batch_images_gt_white = torch.reshape(batch_images_gt,(1,3,512,512))
+            batch_images_gt = image_gt
+            nonhead_mask = batch_head_mask < 0.5   
+            nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)        
+            batch_images_gt[nonhead_mask_c3b] = 1.0
 
-            nonface_mask = torch.logical_or(batch_head_mask < 0.5, torch.logical_or(batch_left_eye_mask >= 0.5, batch_right_eye_mask >= 0.5)).reshape(1,1,512,512)
-            nonface_mask_c3b = nonface_mask.expand(-1, 3, -1, -1)
-            face_image = batch_images_gt_white.clone()
-            face_image[nonface_mask_c3b] = 1.0
-            noneye_mask = torch.logical_and(batch_left_eye_mask < 0.5, batch_right_eye_mask < 0.5).reshape(1,1,512,512)
-            noneye_mask_c3b = noneye_mask.expand(-1, 3, -1, -1)
-            eye_image = batch_images_gt_white.clone()
-            eye_image[noneye_mask_c3b] = 1.0
+            target_image_quality = torch.reshape(
+                batch_images_gt , (1, 3, 512, 512)
+            ).to(device)
 
-            
-            batch_images_gt_white[nonhead_mask_c3b] = 1.0
             batch_images_gt_norm = normalize(
-                (batch_images_gt_white.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(
+                (batch_images_gt.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(
                     np.uint8
                 )[0],
                 camera_matrix,
@@ -470,47 +411,25 @@ def execute_test(log, current_step):
                 ldms,
                 config.img_dim,
             )
-            face_images_norm_big = normalize(
-                (face_image.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(
-                    np.uint8
-                )[0],
-                camera_matrix,
-                camera_distortion,
-                face_model_load,
-                ldms,
-                config.img_dim,
-            )
-            eye_images_norm_big = normalize(
-                (eye_image.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(
-                    np.uint8
-                )[0],
-                camera_matrix,
-                camera_distortion,
-                face_model_load,
-                ldms,
-                config.img_dim,
-            )
-            batch_images_gt_norm = trans_eval(batch_images_gt_norm)
-            target_normalized = torch.reshape(batch_images_gt_norm,(1,3,128,128)).to(device)
-            image = trans(batch_images_gt_norm)
-            batch_images_norm_gt = torch.reshape(image,(1,3,128,128)).to(device)
-            pitchyaw_gt, head_gt = model(batch_images_norm_gt)
+            target_normalized_log = batch_images_gt_norm
+            batch_images_gt_norm = torch.reshape(
+                trans(batch_images_gt_norm), (1, 3, config.img_dim, config.img_dim)
+            ).to(
+                device
+            )  
+            pitchyaw_gt, head_gt = model(batch_images_gt_norm)
 
-
-            batch_images_gen = trans_normalize(image_gen[0,:])
+            batch_images_gen = image_gen
             nonhead_mask = batch_head_mask < 0.5
             nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)
-            batch_images_gen_white = torch.reshape(batch_images_gen,(1,3,512,512))
+            batch_images_gen[nonhead_mask_c3b] = 1.0
 
-            pred_face_image = batch_images_gen_white.clone()
-            pred_face_image[nonface_mask_c3b] = 1.0
-            pred_eye_image = batch_images_gen_white.clone()
-            pred_eye_image[noneye_mask_c3b] = 1.0
-
-            batch_images_gen_white[nonhead_mask_c3b] = 1.0
+            pred_image_quality = torch.reshape(
+                 batch_images_gen, (1, 3, 512, 512)
+            ).to(device)
 
             batch_images_gen_norm = normalize(
-                (batch_images_gen_white.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(
+                (batch_images_gen.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(
                     np.uint8
                 )[0],
                 camera_matrix,
@@ -519,41 +438,14 @@ def execute_test(log, current_step):
                 ldms,
                 config.img_dim,
             )
-            face_images_norm_pre_big = normalize(
-                (pred_face_image.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0],
-                camera_matrix,
-                camera_distortion,
-                face_model_load,
-                ldms,
-                config.img_dim,
-            )
-            eye_images_norm_pre_big = normalize(
-                (pred_eye_image.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0],
-                camera_matrix,
-                camera_distortion,
-                face_model_load,
-                ldms,
-                config.img_dim,
-            )
-            batch_images_gen_norm = trans_eval(batch_images_gen_norm)
-            pred_normalized = torch.reshape(batch_images_gen_norm,(1,3,128,128)).to(device)
-            image = trans(batch_images_gen_norm)
-            batch_images_norm_pred = torch.reshape(image,(1,3,128,128)).to(device)
-            pitchyaw_gen, head_gen = model(batch_images_norm_pred)
 
-            face_images_norm = torch.reshape(
-                trans_eval(face_images_norm_big), (1, 3, 128, 128)
+            pred_normalized_log = batch_images_gen_norm
+            
+            batch_images_norm = torch.reshape(
+                trans(batch_images_gen_norm), (1, 3, config.img_dim, config.img_dim)
             ).to(device)
-            face_images_norm_pre = torch.reshape(
-                trans_eval(face_images_norm_pre_big), (1, 3, 128, 128)
-            ).to(device)
+            pitchyaw_gen, head_gen = model(batch_images_norm)
 
-            eye_images_norm = torch.reshape(
-                trans_eval(eye_images_norm_big), (1, 3, 128, 128)
-            ).to(device)
-            eye_images_norm_pre = torch.reshape(
-                trans_eval(eye_images_norm_pre_big), (1, 3, 128, 128)
-            ).to(device)
 
             loss = losses.gaze_angular_loss(pitchyaw_gt,pitchyaw_gen).detach().cpu().numpy()
             angular_loss += loss
@@ -567,136 +459,44 @@ def execute_test(log, current_step):
             dict_angular_head_loss[name] += loss
             print("Head Angular Error: ",angular_head_loss/num_images,loss,num_images)
 
-            gt_list.append(target_normalized[0,:])
-            pred_list.append(pred_normalized[0,:])
+            gt_list.append(target_image_quality[0,:])
+            pred_list.append(pred_image_quality[0,:])
 
-            dict_gt_images[name].append(target_normalized[0,:])
-            dict_pred_images[name].append(pred_normalized[0,:])
+            dict_gt_images[name].append(target_image_quality[0,:])
+            dict_pred_images[name].append(pred_image_quality[0,:])
 
-            full_images_gt_list.append(target_normalized[0,:])
-            full_images_pred_list.append(pred_normalized[0,:])
+            full_images_gt_list.append(target_image_quality[0,:])
+            full_images_pred_list.append(pred_image_quality[0,:])
 
-            loss = ssim(target_normalized, pred_normalized, data_range=1.).detach().cpu().numpy()
+            loss = ssim(target_image_quality, pred_image_quality, data_range=1.).detach().cpu().numpy()
             ssim_loss += loss
             dict_ssim_loss[name] += loss
             print("SSIM: ",ssim_loss/num_images,loss,num_images)
 
-            loss = (
-                ssim(face_images_norm, face_images_norm_pre, data_range=1.0)
-                .detach()
-                .cpu()
-                .numpy()
-            )
-            ssim_face_loss += loss
-            dict_ssim_face_loss[name] += loss
-            print("SSIM face: ", ssim_face_loss / num_images, loss, num_images)
-
-            loss = (
-                ssim(eye_images_norm, eye_images_norm_pre, data_range=1.0)
-                .detach()
-                .cpu()
-                .numpy()
-            )
-            ssim_eye_loss += loss
-            dict_ssim_eye_loss[name] += loss
-            print("SSIM eyes: ", ssim_eye_loss / num_images, loss, num_images)
-
-            loss = psnr(target_normalized, pred_normalized, data_range=1.).detach().cpu().numpy()
+            loss = psnr(target_image_quality, pred_image_quality, data_range=1.).detach().cpu().numpy()
             psnr_loss += loss
             dict_psnr_loss[name] += loss
             print("PSNR: ",psnr_loss/num_images,loss,num_images)
 
-            loss = (
-                psnr(face_images_norm, face_images_norm_pre, data_range=1.0)
-                .detach()
-                .cpu()
-                .numpy()
-            )
-            psnr_face_loss += loss
-            dict_psnr_face_loss[name] += loss
-            print("PSNR face: ", psnr_face_loss / num_images, loss, num_images)
-
-            loss = (
-                psnr(eye_images_norm, eye_images_norm_pre, data_range=1.0)
-                .detach()
-                .cpu()
-                .numpy()
-            )
-            psnr_eye_loss += loss
-            dict_psnr_eye_loss[name] += loss
-            print("PSNR eyes: ", psnr_eye_loss / num_images, loss, num_images)
-
             lpips_metric = LPIPS()
-            loss = lpips_metric(target_normalized, pred_normalized).detach().cpu().numpy()
+            loss = lpips_metric(target_image_quality, pred_image_quality).detach().cpu().numpy()
             lpips_loss += loss
             dict_lpips_loss[name] += loss
             print("LPIPS: ",lpips_loss/num_images,loss,num_images)
 
-            lpips_metric = LPIPS()
-            loss = lpips_metric(face_images_norm, face_images_norm_pre).detach().cpu().numpy()
-            lpips_face_loss += loss
-            dict_lpips_face_loss[name] += loss
-            print("LPIPS face: ", lpips_face_loss / num_images, loss, num_images)
-
-            lpips_metric = LPIPS()
-            loss = lpips_metric(eye_images_norm, eye_images_norm_pre).detach().cpu().numpy()
-            lpips_eye_loss += loss
-            dict_lpips_eye_loss[name] += loss
-            print("LPIPS eyes: ", lpips_eye_loss / num_images, loss, num_images)
-
-            dists_metric = DISTS()
-            loss = dists_metric(target_normalized, pred_normalized).detach().cpu().numpy()
-            dists_loss += loss
-            dict_dists_loss[name] += loss
-            print("DISTS: ",dists_loss/num_images,loss,num_images)
-
-            loss = torch.nn.functional.l1_loss(target_normalized, pred_normalized).detach().cpu().numpy()
+            loss = torch.nn.functional.l1_loss(target_image_quality, pred_image_quality).detach().cpu().numpy()
             l1_loss += loss
             dict_l1_loss[name] += loss
             print("L1 Distance: ", l1_loss/num_images,loss, num_images)
 
-            loss = F.mse_loss(target_normalized, pred_normalized).detach().cpu().numpy()
-            l2_loss += loss
-            dict_l2_loss[name] += loss
-            print("L2 Distance: ", l2_loss/num_images,loss, num_images)
-
-            gray_pred = cv2.cvtColor((pred_normalized.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0], cv2.COLOR_BGR2GRAY)
-            loss = variance_of_laplacian(gray_pred)
-            blur_loss += loss
-            dict_blur_loss[name] += loss
-            print("Image Blurriness: ", blur_loss/num_images, loss, num_images)
-
-            gray_pred = cv2.cvtColor(
-                (face_images_norm_pre.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(
-                    np.uint8
-                )[0],
-                cv2.COLOR_BGR2GRAY,
-            )
-            loss = variance_of_laplacian(gray_pred)
-            blur_face_loss += loss
-            dict_blur_face_loss[name] += loss
-            print("Image Blurriness face: ", blur_face_loss / num_images, loss, num_images)
-
-            gray_pred = cv2.cvtColor(
-                (eye_images_norm_pre.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(
-                    np.uint8
-                )[0],
-                cv2.COLOR_BGR2GRAY,
-            )
-            loss = variance_of_laplacian(gray_pred)
-            blur_eye_loss += loss
-            dict_blur_eye_loss[name] += loss
-            print("Image Blurriness eyes: ", blur_eye_loss / num_images, loss, num_images)
-
             if index % log == 0:
-                log_evaluation_image(pred_normalized, target_normalized, ((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0).astype(np.uint8), image_gt, image_gen,  face_images_norm, face_images_norm_pre, eye_images_norm, eye_images_norm_pre)
+                log_evaluation_image(pred_normalized_log, target_normalized_log, ((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0).astype(np.uint8), image_gt, image_gen)
 
         fid = calculate_FID(gt_images= gt_list, pred_images= pred_list)
 
         if index % log == 0:
-            log_one_subject_evaluation_results(current_step, angular_loss, angular_head_loss, ssim_loss, psnr_loss, lpips_loss, dists_loss, 
-                                                ssim_eye_loss, psnr_eye_loss, lpips_eye_loss, blur_eye_loss, ssim_face_loss, psnr_face_loss, lpips_face_loss, blur_face_loss,
-                                                l1_loss, l2_loss, blur_loss, num_images, fid )
+            log_one_subject_evaluation_results(current_step, angular_loss, angular_head_loss, ssim_loss, psnr_loss, lpips_loss,
+                                                l1_loss, num_images, fid )
 
     for name in config.data_names:
         dict_fid[name]  = calculate_FID(gt_images= dict_gt_images[name], pred_images= dict_pred_images[name])
@@ -704,9 +504,8 @@ def execute_test(log, current_step):
     full_fid = calculate_FID(gt_images= full_images_gt_list, pred_images= full_images_pred_list)    
                             
     if index % log == 0:
-        log_all_datasets_evaluation_results(current_step, config.data_names, dict_angular_loss, dict_angular_head_loss, dict_ssim_loss, dict_psnr_loss, dict_lpips_loss, dict_dists_loss, 
-                                                dict_ssim_eye_loss, dict_psnr_eye_loss, dict_lpips_eye_loss, dict_blur_eye_loss, dict_ssim_face_loss, dict_psnr_face_loss, dict_lpips_face_loss, dict_blur_face_loss,
-                                                dict_l1_loss, dict_l2_loss, dict_blur_loss, dict_num_images,dict_fid, full_fid)
+        log_all_datasets_evaluation_results(current_step, config.data_names, dict_angular_loss, dict_angular_head_loss, dict_ssim_loss, dict_psnr_loss, dict_lpips_loss,
+                                                dict_l1_loss, dict_num_images,dict_fid, full_fid)
 
 
 def execute_visualize(data):
