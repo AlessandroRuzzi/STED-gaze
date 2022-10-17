@@ -183,14 +183,13 @@ class STED(nn.Module):
                 new_embedding[idx] = rotated_embedding
                 image_random = self.decoder(new_embedding)
                 #gaze_random, head_random = self.GazeHeadNet_eval(image_random)
-                gaze_random, head_random = torch.tensor(0.0).to(self.device), torch.tensor(0.0).to(self.device)
-                if idx < config.num_1d_units + config.num_2d_units + num_0d_units - 2:
-                    gaze_disentangle_loss += losses.gaze_angular_loss(gaze_a_rec, gaze_random)
-                    head_disentangle_loss += losses.gaze_angular_loss(head_a_rec, head_random)
-                if idx == config.num_1d_units + config.num_2d_units + num_0d_units - 2:  # head
-                    losses_dict['head_to_gaze'] = losses.gaze_angular_loss(gaze_a_rec, gaze_random)
-                if idx == config.num_1d_units + config.num_2d_units + num_0d_units - 1:  # gaze
-                    losses_dict['gaze_to_head'] = losses.gaze_angular_loss(head_a_rec, head_random)
+                #if idx < config.num_1d_units + config.num_2d_units + num_0d_units - 2:
+                #    gaze_disentangle_loss += losses.gaze_angular_loss(gaze_a_rec, gaze_random)
+                #    head_disentangle_loss += losses.gaze_angular_loss(head_a_rec, head_random)
+                #if idx == config.num_1d_units + config.num_2d_units + num_0d_units - 2:  # head
+                #    losses_dict['head_to_gaze'] = losses.gaze_angular_loss(gaze_a_rec, gaze_random)
+                #if idx == config.num_1d_units + config.num_2d_units + num_0d_units - 1:  # gaze
+                #    losses_dict['gaze_to_head'] = losses.gaze_angular_loss(head_a_rec, head_random)
             idx += 1
         if config.num_1d_units + config.num_2d_units - 2 != 0:
             losses_dict['gaze_disentangle'] = gaze_disentangle_loss / (
