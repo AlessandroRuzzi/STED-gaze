@@ -417,7 +417,7 @@ def execute_test(log, current_step):
                 ldms,
                 config.img_dim,
             )
-            target_normalized_log = batch_images_gt_norm
+            target_normalized_log = torch.reshape(trans_normalize(batch_images_gt_norm),(1,3,512,512)).to(device)
             batch_images_gt_norm = torch.reshape(
                 trans(batch_images_gt_norm), (1, 3, config.img_dim, config.img_dim)
             ).to(
@@ -446,7 +446,7 @@ def execute_test(log, current_step):
                 config.img_dim,
             )
 
-            pred_normalized_log = batch_images_gen_norm
+            pred_normalized_log = torch.reshape(trans_normalize(batch_images_gen_norm),(1,3,512,512)).to(device)
             
             batch_images_norm = torch.reshape(
                 trans(batch_images_gen_norm), (1, 3, config.img_dim, config.img_dim)
