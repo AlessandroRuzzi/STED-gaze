@@ -182,7 +182,8 @@ class STED(nn.Module):
                 new_embedding = [item for item in embeddings_a]
                 new_embedding[idx] = rotated_embedding
                 image_random = self.decoder(new_embedding)
-                gaze_random, head_random = self.GazeHeadNet_eval(image_random)
+                #gaze_random, head_random = self.GazeHeadNet_eval(image_random)
+                gaze_random, head_random = 0,0
                 if idx < config.num_1d_units + config.num_2d_units + num_0d_units - 2:
                     gaze_disentangle_loss += losses.gaze_angular_loss(gaze_a_rec, gaze_random)
                     head_disentangle_loss += losses.gaze_angular_loss(head_a_rec, head_random)
