@@ -157,11 +157,11 @@ class STED(nn.Module):
         losses_dict = OrderedDict()
         # Encode input from a
         pseudo_labels_a, embeddings_a = self.encoder(data['image_a'])
-        losses_dict['gaze_a'] = losses.gaze_angular_loss(y=data['gaze_a'], y_hat=pseudo_labels_a[-1])
-        losses_dict['head_a'] = losses.gaze_angular_loss(y=data['head_a'], y_hat=pseudo_labels_a[-2])
+        #losses_dict['gaze_a'] = losses.gaze_angular_loss(y=data['gaze_a'], y_hat=pseudo_labels_a[-1])
+        #losses_dict['head_a'] = losses.gaze_angular_loss(y=data['head_a'], y_hat=pseudo_labels_a[-2])
         # Direct reconstruction
-        image_a_rec = self.decoder(embeddings_a)
-        gaze_a_rec, head_a_rec = self.GazeHeadNet_eval(image_a_rec)
+        #image_a_rec = self.decoder(embeddings_a)
+        #gaze_a_rec, head_a_rec = self.GazeHeadNet_eval(image_a_rec)
 
         # embedding disentanglement error
         idx = 0
@@ -171,17 +171,18 @@ class STED(nn.Module):
         num_0d_units = 1 if config.size_0d_unit > 0 else 0
         for dof, num_feats in self.configuration:
             if dof != 0:
-                random_angle = (torch.rand(batch_size, dof).to(self.device) - 0.5) * np.pi * 0.2
-                random_angle += pseudo_labels_a[idx]
-                if dof == 2:
-                    rotated_embedding = torch.matmul(self.rotation_matrix_2d(random_angle, False), torch.matmul(
-                        self.rotation_matrix_2d(pseudo_labels_a[idx], True), embeddings_a[idx]))
-                else:
-                    rotated_embedding = torch.matmul(self.rotation_matrix_1d(random_angle, False), torch.matmul(
-                        self.rotation_matrix_1d(pseudo_labels_a[idx], True), embeddings_a[idx]))
-                new_embedding = [item for item in embeddings_a]
-                new_embedding[idx] = rotated_embedding
-                image_random = self.decoder(new_embedding)
+                pass
+                #random_angle = (torch.rand(batch_size, dof).to(self.device) - 0.5) * np.pi * 0.2
+                #random_angle += pseudo_labels_a[idx]
+                #if dof == 2:
+                #    rotated_embedding = torch.matmul(self.rotation_matrix_2d(random_angle, False), torch.matmul(
+                #        self.rotation_matrix_2d(pseudo_labels_a[idx], True), embeddings_a[idx]))
+                #else:
+                #    rotated_embedding = torch.matmul(self.rotation_matrix_1d(random_angle, False), torch.matmul(
+                #        self.rotation_matrix_1d(pseudo_labels_a[idx], True), embeddings_a[idx]))
+                #new_embedding = [item for item in embeddings_a]
+                #new_embedding[idx] = rotated_embedding
+                #image_random = self.decoder(new_embedding)
                 #gaze_random, head_random = self.GazeHeadNet_eval(image_random)
                 #if idx < config.num_1d_units + config.num_2d_units + num_0d_units - 2:
                 #    gaze_disentangle_loss += losses.gaze_angular_loss(gaze_a_rec, gaze_random)
@@ -192,10 +193,11 @@ class STED(nn.Module):
                 #    losses_dict['gaze_to_head'] = losses.gaze_angular_loss(head_a_rec, head_random)
             idx += 1
         if config.num_1d_units + config.num_2d_units - 2 != 0:
-            losses_dict['gaze_disentangle'] = gaze_disentangle_loss / (
-                        config.num_1d_units + config.num_2d_units - 2)
-            losses_dict['head_disentangle'] = head_disentangle_loss / (
-                        config.num_1d_units + config.num_2d_units - 2)
+            pass
+            #losses_dict['gaze_disentangle'] = gaze_disentangle_loss / (
+            #            config.num_1d_units + config.num_2d_units - 2)
+            #losses_dict['head_disentangle'] = head_disentangle_loss / (
+            #            config.num_1d_units + config.num_2d_units - 2)
 
         # Calculate some errors if target image is available
         if 'image_b' in data:
@@ -210,12 +212,12 @@ class STED(nn.Module):
             embeddings_a_to_b.append(head_embedding)
             embeddings_a_to_b.append(gaze_embedding)
             output_dict['image_b_hat'] = self.decoder(embeddings_a_to_b)
-            gaze_b_hat, head_b_hat = self.GazeHeadNet_eval(output_dict['image_b_hat'])
-            losses_dict['head_redirection'] = losses.gaze_angular_loss(y=data['head_b'], y_hat=head_b_hat)
-            losses_dict['gaze_redirection'] = losses.gaze_angular_loss(y=data['gaze_b'], y_hat=gaze_b_hat)
+            #gaze_b_hat, head_b_hat = self.GazeHeadNet_eval(output_dict['image_b_hat'])
+            #losses_dict['head_redirection'] = losses.gaze_angular_loss(y=data['head_b'], y_hat=head_b_hat)
+            #losses_dict['gaze_redirection'] = losses.gaze_angular_loss(y=data['gaze_b'], y_hat=gaze_b_hat)
 
-            losses_dict['lpips'] = torch.mean(self.lpips(data['image_b'], output_dict['image_b_hat']))
-            losses_dict['l1'] = losses.reconstruction_l1_loss(data['image_b'], output_dict['image_b_hat'])
+            #losses_dict['lpips'] = torch.mean(self.lpips(data['image_b'], output_dict['image_b_hat']))
+            #losses_dict['l1'] = losses.reconstruction_l1_loss(data['image_b'], output_dict['image_b_hat'])
 
             pseudo_labels_b, _ = self.encoder(data['image_b'])
             normalized_embeddings_from_a = self.rotate(embeddings_a, pseudo_labels_a, inverse=True)
