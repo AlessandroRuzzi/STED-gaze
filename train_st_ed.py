@@ -425,7 +425,7 @@ def execute_test(log, current_step):
             )  
             pitchyaw_gt, head_gt = model(batch_images_gt_norm)
 
-            batch_images_gen = trans_normalize(image_gen)
+            batch_images_gen = trans_normalize(image_gen[0,:])
             nonhead_mask = batch_head_mask < 0.5
             nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)
             batch_images_gen = torch.reshape(batch_images_gen,(1,3,512,512))
