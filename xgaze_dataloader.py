@@ -131,19 +131,18 @@ class GazeDataset(Dataset):
             for num_i in range(0, len(self.selected_keys)):
                 if sub_folder == "val":
                     n = num_val_images
+                    self.idx_to_kv += [
+                    (num_i, i) for i in range(n)
+                    ]  
                 else:
                     n= 50*18
-                    #n = self.hdfs[num_i]["face_patch"].shape[0]
-                
-                #self.idx_to_kv += [
-                #    (num_i, i) for i in range(n)
-                #]  
-                self.idx_to_kv += [
-                    (num_i, i) for i in range(43*18)
-                ]  
-                self.idx_to_kv += [
-                    (num_i, i) for i in range(self.hdfs[num_i]["face_patch"].shape[0]-1, self.hdfs[num_i]["face_patch"].shape[0] - 1 - 7*18, -1)
-                ] 
+                    
+                    self.idx_to_kv += [
+                        (num_i, i) for i in range(43*18)
+                    ]  
+                    self.idx_to_kv += [
+                        (num_i, i) for i in range(self.hdfs[num_i]["face_patch"].shape[0]-1, self.hdfs[num_i]["face_patch"].shape[0] - 1 - 7*18, -1)
+                    ] 
                 
         else:
             print('load the file: ', index_file)
