@@ -221,8 +221,8 @@ class STED(nn.Module):
             normalized_embeddings_from_a = self.rotate(embeddings_a, pseudo_labels_a, inverse=True)
             embeddings_a_to_b_all = self.rotate(normalized_embeddings_from_a, pseudo_labels_b)
             output_dict['image_b_hat_all'] = self.decoder(embeddings_a_to_b_all)
-            losses_dict['lpips_all'] = torch.mean(self.lpips(data['image_b'], output_dict['image_b_hat_all']))
-            losses_dict['l1_all'] = losses.reconstruction_l1_loss(data['image_b'], output_dict['image_b_hat_all'])
+            #losses_dict['lpips_all'] = torch.mean(self.lpips(data['image_b'], output_dict['image_b_hat_all']))
+            #losses_dict['l1_all'] = losses.reconstruction_l1_loss(data['image_b'], output_dict['image_b_hat_all'])
 
         return output_dict, losses_dict
 
