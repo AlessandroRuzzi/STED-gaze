@@ -47,6 +47,11 @@ trans = transforms.Compose([
         transforms.Resize(size=(224,224)),
     ])
 
+trans_normalize = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.ToTensor(),  
+    ])
+
 torch.manual_seed(45)  # cpu
 torch.cuda.manual_seed(55)  # gpu
 np.random.seed(65)  # numpy
@@ -392,9 +397,10 @@ def execute_test(log, current_step):
             image_gt = ((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0).astype(np.uint8)
             image_gen = np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
 
-            batch_images_gt = image_gt
+            batch_images_gt = trans_normalize(image_gt[0,:])
             nonhead_mask = batch_head_mask < 0.5   
-            nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)        
+            nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)  
+            batch_images_gt = torch.reshape(batch_images_gt,(1,3,512,512))      
             batch_images_gt[nonhead_mask_c3b] = 1.0
 
             target_image_quality = torch.reshape(
@@ -419,9 +425,10 @@ def execute_test(log, current_step):
             )  
             pitchyaw_gt, head_gt = model(batch_images_gt_norm)
 
-            batch_images_gen = image_gen
+            batch_images_gen = trans_normalize(image_gen)
             nonhead_mask = batch_head_mask < 0.5
             nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)
+            batch_images_gen = torch.reshape(batch_images_gen,(1,3,512,512))
             batch_images_gen[nonhead_mask_c3b] = 1.0
 
             pred_image_quality = torch.reshape(
