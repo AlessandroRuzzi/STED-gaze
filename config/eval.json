@@ -13,7 +13,7 @@
     "growth_rate": 32,
     "eval_batch_size": 1,
     "num_data_loaders": 0,
-    "use_tensorboard": true,
+    "use_tensorboard": false,
     "skip_training": true,
     "print_freq_train": 200,
     "test_subsample": 0.02,
