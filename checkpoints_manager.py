@@ -63,7 +63,7 @@ class CheckpointsManager(object):
         assert os.path.isfile(checkpoint_fpath)
         weights = torch.load(checkpoint_fpath,map_location=torch.device(self.device))
        
-
+        print(step_number,checkpoint_fpath)
         # If was stored using DataParallel but being read on 1 GPU
         if torch.cuda.device_count() == 1:
             if next(iter(weights.keys())).startswith('module.'):
