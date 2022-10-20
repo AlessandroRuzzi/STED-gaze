@@ -183,7 +183,7 @@ def save_model(network, current_step):
     }
     p = os.path.join(config.save_path, "checkpoints")
     #path = os.path.join(p, str(current_step) + '.pt')
-    path = os.path.join(p, str(current_step) + '_full_white.pt')
+    path = os.path.join(p, str(current_step) + '_full_orig.pt')
     if not os.path.exists(p):
         os.makedirs(p)
     torch.save(models, path)

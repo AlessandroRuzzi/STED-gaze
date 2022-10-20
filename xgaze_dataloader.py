@@ -192,7 +192,7 @@ class GazeDataset(Dataset):
     def __getitem__(self, idx):
         key, idx = self.idx_to_kv[idx]
 
-        #self.hdf = h5py.File(os.path.join(self.path,"xgaze_" + self.selected_keys[key]), 'r', swmr=True)
+        self.hdf = h5py.File(os.path.join(self.path,"xgaze_" + self.selected_keys[key]), 'r', swmr=True)
 
         self.hdf_nerf = h5py.File(os.path.join(self.path,"xgaze_" + self.selected_keys[key]), 'r', swmr=True) #TODO check the path
         assert self.hdf_nerf.swmr_mode
@@ -209,7 +209,7 @@ class GazeDataset(Dataset):
             gaze_label = self.hdf_nerf["pitchyaw_head"][idx, :]
             #gaze_label = self.hdf["face_gaze"][idx, :]
             gaze_label = gaze_label.astype(np.float32)
-            head_label = self.hdf_nerf['face_head_pose'][idx, :]
+            head_label = self.hdf['face_head_pose'][idx, :]
             head_label = head_label.astype(np.float32)
             entry = {
             'key': key,
@@ -239,7 +239,7 @@ class GazeDataset(Dataset):
                 gaze_label = self.hdf_nerf["pitchyaw_head"][idx_b, :]
                 #gaze_label = self.hdf["face_gaze"][idx_b, :]
                 gaze_label = gaze_label.astype(np.float32)
-                head_label = self.hdf_nerf['face_head_pose'][idx_b, :]
+                head_label = self.hdf['face_head_pose'][idx_b, :]
                 head_label = head_label.astype(np.float32)
 
                 face_mask = self.hdf_nerf["head_mask"][idx_b, :]
