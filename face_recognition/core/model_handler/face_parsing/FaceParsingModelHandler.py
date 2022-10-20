@@ -11,7 +11,6 @@ import logging.config
 
 from face_recognition.utils.BuzException import InputError
 logging.config.fileConfig("face_recognition/config/logging.conf")
-logger = logging.getLogger('sdk')
 
 import torch
 import torch.nn.functional as F
@@ -51,7 +50,6 @@ class FaceParsingModelHandler(BaseModelHandler):
             A dict, {'rects','points','scores','image_ids'} 
         """
         if not isinstance(image, np.ndarray):
-            logger.error('The input should be the ndarray read by cv2!')
             raise InputError()
         img = np.float32(image)
         img = img.transpose(2, 0, 1)

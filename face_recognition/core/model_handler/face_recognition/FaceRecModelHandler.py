@@ -5,7 +5,7 @@
 """
 import logging.config
 logging.config.fileConfig("face_recognition/config/logging.conf")
-logger = logging.getLogger('sdk')
+
 
 import numpy as np
 import torch
@@ -55,7 +55,6 @@ class FaceRecModelHandler(BaseModelHandler):
            A torch tensor, the input after preprecess, shape: (3, 112, 112).
         """       
         if not isinstance(image, np.ndarray):
-            logger.error('The input should be the ndarray read by cv2!')
             raise InputError()
         height, width, channels = image.shape
         if height != self.input_height or width != self.input_width:
