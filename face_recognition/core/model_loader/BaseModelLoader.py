@@ -25,8 +25,6 @@ class BaseModelLoader(metaclass=ABCMeta):
             raise e
         except Exception as e:
             raise e
-        else:
-            print('Successfully parsed the model configuration file meta.json!')
         # common configs for all model
         self.cfg['model_path'] = model_path
         self.cfg['model_category'] = model_category
