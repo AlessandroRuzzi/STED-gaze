@@ -21,8 +21,8 @@ def evaluation_similarity(gt_image, gen_image):
             device = "cpu"
     mpl_logger = logging.getLogger('matplotlib')
     mpl_logger.setLevel(logging.WARNING)
-    logging.config.fileConfig("face_recognition/config/logging.conf")
-    logger = logging.getLogger('api')
+    #logging.config.fileConfig("face_recognition/config/logging.conf")
+    #logger = logging.getLogger('api')
 
     with open('face_recognition/config/model_conf.yaml') as f:
         model_conf = yaml.load(f)

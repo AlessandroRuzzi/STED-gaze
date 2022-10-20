@@ -6,8 +6,6 @@
 import os
 import sys
 sys.path.append('models/network_def')
-import logging.config
-logging.config.fileConfig("face_recognition/config/logging.conf")
 from abc import ABCMeta, abstractmethod
 
 import json

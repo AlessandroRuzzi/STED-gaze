@@ -4,9 +4,6 @@
 @contact: jun21wangustc@gmail.com 
 """
 
-import logging.config
-logging.config.fileConfig("face_recognition/config/logging.conf")
-
 
 import torch
 import numpy as np

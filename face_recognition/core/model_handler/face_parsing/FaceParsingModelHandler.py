@@ -7,10 +7,8 @@
 # based on:
 # https://github.com/FacePerceiver/facer/blob/main/facer/face_parsing/farl.py
 import functools
-import logging.config
 
 from face_recognition.utils.BuzException import InputError
-logging.config.fileConfig("face_recognition/config/logging.conf")
 
 import torch
 import torch.nn.functional as F

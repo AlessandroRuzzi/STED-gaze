@@ -4,8 +4,6 @@
 @contact: fengyu_cnyc@163.com
 """
 
-import logging.config
-logging.config.fileConfig("face_recognition/config/logging.conf")
 
 import torch
 

@@ -3,8 +3,6 @@
 @date: 20201023
 @contact: jun21wangustc@gmail.com 
 """
-import logging.config
-logging.config.fileConfig("face_recognition/config/logging.conf")
 
 import torch
 
