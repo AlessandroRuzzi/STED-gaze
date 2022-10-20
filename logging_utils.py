@@ -132,7 +132,7 @@ def log_simple_image(img, description):
     wandb.log({description: log_image})
 
 def log_one_subject_evaluation_results(current_step, angular_loss, angular_head_loss, ssim_loss, psnr_loss, lpips_loss,
-                                         l1_loss, num_images, fid ):
+                                         l1_loss, num_images, fid, similarity ):
     wandb.log(
                 {
                     "Current_Step": current_step,
@@ -143,11 +143,12 @@ def log_one_subject_evaluation_results(current_step, angular_loss, angular_head_
                     "Subject LPIPS": lpips_loss / num_images,
                     "Subject L1 Distance: ": l1_loss / num_images,
                     "Subject FID: ": fid,
+                    "Subject Similarity: ": similarity,
                 }
             )
 
 def log_all_datasets_evaluation_results(current_step, data_names, dict_angular_loss, dict_angular_head_loss, dict_ssim_loss, dict_psnr_loss, dict_lpips_loss,
-                                        dict_l1_loss, dict_num_images, dict_fid, full_fid):
+                                        dict_l1_loss, dict_num_images, dict_fid, full_fid, dict_similarity):
 
     angular_loss = 0.0
     angular_head_loss = 0.0
@@ -155,6 +156,7 @@ def log_all_datasets_evaluation_results(current_step, data_names, dict_angular_l
     psnr_loss = 0.0
     lpips_loss = 0.0
     l1_loss = 0.0
+    similarity = 0.0
     num_images = 0
 
     for name in data_names:
@@ -164,6 +166,7 @@ def log_all_datasets_evaluation_results(current_step, data_names, dict_angular_l
         psnr_loss += dict_psnr_loss[name]
         lpips_loss += dict_lpips_loss[name]
         l1_loss += dict_l1_loss[name]
+        similarity += dict_similarity[name]
         num_images += dict_num_images[name]
 
         wandb.log(
@@ -176,6 +179,7 @@ def log_all_datasets_evaluation_results(current_step, data_names, dict_angular_l
                     name + " LPIPS": dict_lpips_loss[name] / dict_num_images[name],
                     name + " L1 Distance: ": dict_l1_loss[name] / dict_num_images[name],
                     name + " FID: ": dict_fid[name],
+                    name + " Similarity: ": dict_similarity[name],
                 }
             )
     wandb.log(
@@ -187,6 +191,7 @@ def log_all_datasets_evaluation_results(current_step, data_names, dict_angular_l
                     " FULL PSNR": psnr_loss / num_images,
                     " FULL LPIPS": lpips_loss / num_images,
                     " FULL L1 Distance: ": l1_loss / num_images,
+                    " FULL Similarity": similarity / num_images,
                     " FULL FID: ": full_fid,
                 }
             )

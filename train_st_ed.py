@@ -38,6 +38,7 @@ import torch.nn.functional as F
 from gaze_estimation_utils import normalize
 import scipy.io
 from logging_utils import log_evaluation_image, log_one_subject_evaluation_results, log_all_datasets_evaluation_results
+from face_recognition.evaluation_similarity import evaluation_similarity
 
 trans = transforms.Compose([
         transforms.ToPILImage(),
@@ -51,6 +52,15 @@ trans_normalize = transforms.Compose([
         transforms.ToPILImage(),
         transforms.ToTensor(),  
     ])
+
+trans_resize = transforms.Compose(
+    [
+        transforms.ToPILImage(),
+        transforms.ToTensor(),  # this also convert pixel value from [0,255] to [0,1]
+        #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        transforms.Resize(size=(224, 224)),
+    ]
+)
 
 torch.manual_seed(45)  # cpu
 torch.cuda.manual_seed(55)  # gpu
@@ -350,6 +360,8 @@ def execute_test(log, current_step):
     dict_l1_loss = {}
     dict_num_images = {}
 
+    dict_similarity = {}
+
     dict_fid = {}
     dict_gt_images = {}
     dict_pred_images = {}
@@ -365,6 +377,8 @@ def execute_test(log, current_step):
         dict_l1_loss[name] = 0.0
         dict_num_images[name] = 0
 
+        dict_similarity[name] = 0.0
+
         dict_fid[name] = 0.0
         dict_gt_images[name] = []
         dict_pred_images[name] = []
@@ -378,6 +392,8 @@ def execute_test(log, current_step):
         lpips_loss = 0.0
         l1_loss = 0.0
         num_images = 0
+
+        similarity = 0.0
 
         fid = 0.0
         gt_list = []
@@ -466,6 +482,21 @@ def execute_test(log, current_step):
             dict_angular_head_loss[name] += loss
             print("Head Angular Error: ",angular_head_loss/num_images,loss,num_images)
 
+            sim_gt = ( torch.reshape(
+                trans_resize(batch_images_gt[0,:]) , (1, 3, config.img_dim, config.img_dim)
+            ).to(device).detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0]
+
+            sim_gen = ( torch.reshape(
+                trans_resize(batch_images_gen[0,:]) , (1, 3, config.img_dim, config.img_dim)
+            ).to(device).detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0]
+            try:
+                loss = evaluation_similarity(sim_gt, sim_gen)
+            except:
+                loss = -0.1
+            similarity += loss
+            dict_similarity[name] += loss
+            print("Similarity Score: ", similarity / num_images, loss, num_images)
+
             gt_list.append(target_image_quality[0,:])
             pred_list.append(pred_image_quality[0,:])
 
@@ -503,7 +534,7 @@ def execute_test(log, current_step):
 
         if index % log == 0:
             log_one_subject_evaluation_results(current_step, angular_loss, angular_head_loss, ssim_loss, psnr_loss, lpips_loss,
-                                                l1_loss, num_images, fid )
+                                                l1_loss, num_images, fid , similarity)
 
     for name in config.data_names:
         dict_fid[name]  = calculate_FID(gt_images= dict_gt_images[name], pred_images= dict_pred_images[name])
@@ -512,7 +543,7 @@ def execute_test(log, current_step):
                             
     if index % log == 0:
         log_all_datasets_evaluation_results(current_step, config.data_names, dict_angular_loss, dict_angular_head_loss, dict_ssim_loss, dict_psnr_loss, dict_lpips_loss,
-                                                dict_l1_loss, dict_num_images,dict_fid, full_fid)
+                                                dict_l1_loss, dict_num_images,dict_fid, full_fid, dict_similarity)
 
 
 def execute_visualize(data):
