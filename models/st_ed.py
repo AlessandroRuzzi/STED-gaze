@@ -340,10 +340,10 @@ class STED(nn.Module):
                     losses_dict['label_disentangle'] += losses.gaze_angular_loss(y, y_hat)
             total_loss += losses_dict['label_disentangle'] * config.coeff_disentangle_pseudo_label_loss
 
-        #feature_h, gaze_h, head_h = self.GazeHeadNet_train((trans(image_b_hat)-self.mean)/self.std, True)
-        #feature_t, gaze_t, head_t = self.GazeHeadNet_train((trans(data['image_b'])-self.mean)/self.std, True)
-        feature_h, gaze_h, head_h = self.GazeHeadNet_train( trans(image_b_hat), True)
-        feature_t, gaze_t, head_t = self.GazeHeadNet_train( trans(data['image_b']), True)
+        feature_h, gaze_h, head_h = self.GazeHeadNet_train((trans(image_b_hat)-self.mean)/self.std, True)
+        feature_t, gaze_t, head_t = self.GazeHeadNet_train((trans(data['image_b'])-self.mean)/self.std, True)
+        #feature_h, gaze_h, head_h = self.GazeHeadNet_train( trans(image_b_hat), True)
+        #feature_t, gaze_t, head_t = self.GazeHeadNet_train( trans(data['image_b']), True)
         losses_dict['redirection_feature_loss'] = 0
         for i in range(len(feature_h)):
             losses_dict['redirection_feature_loss'] += nn.functional.mse_loss(feature_h[i], feature_t[i].detach())
