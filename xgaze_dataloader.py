@@ -207,8 +207,6 @@ class GazeDataset(Dataset):
 
         # Get labels
         if self.is_load_label:
-            print("--Xucong1-- ", self.hdf['face_head_pose'][idx, :])
-            print("--Ours1-- ", self.hdf_nerf['face_head_pose'][idx, :])
 
             gaze_label = self.hdf_nerf["pitchyaw_head"][idx, :]
             #gaze_label = self.hdf["face_gaze"][idx, :]
@@ -221,7 +219,6 @@ class GazeDataset(Dataset):
             'gaze_a': gaze_label,
             'head_a': head_label,
         }
-            print("--Ours New1-- ", entry["head_a"])
             if self.get_second_sample:
                 all_indices = [i for i in range(self.n) if i != idx]
                 if len(all_indices) == 1:
@@ -241,8 +238,6 @@ class GazeDataset(Dataset):
                 image = self.preprocess_entry(image)
                 #image = self.transform(image)
 
-                print("--Xucong2-- ", self.hdf['face_head_pose'][idx_b, :])
-                print("--Ours2-- ", self.hdf_nerf['face_head_pose'][idx_b, :])
 
                 gaze_label = self.hdf_nerf["pitchyaw_head"][idx_b, :]
                 #gaze_label = self.hdf["face_gaze"][idx_b, :]
@@ -265,9 +260,6 @@ class GazeDataset(Dataset):
                 entry['right_eye_b'] = right_eye_mask
                 entry['cam_ind_b'] = self.hdf_nerf["cam_index"][idx_b, :]
                 entry['ldms_b'] = self.hdf_nerf["facial_landmarks"][idx_b, :]
-
-                print("--Ours New2-- ", entry["head_b"])
-
 
             return entry
         else:
