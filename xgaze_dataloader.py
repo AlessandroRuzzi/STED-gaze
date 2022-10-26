@@ -193,8 +193,9 @@ class GazeDataset(Dataset):
         key, idx = self.idx_to_kv[idx]
 
         self.hdf = h5py.File(os.path.join("/data/data2/aruzzi/train", self.selected_keys[key]), 'r', swmr=True)
+        self.hdf_head = h5py.File(os.path.join("/data/data2/aruzzi/xgaze_subjects_head","xgaze_subject_head_"  + self.selected_keys[key][-7:]), 'r', swmr=True)
 
-        self.hdf_nerf = h5py.File(os.path.join(self.path,"xgaze_" + self.selected_keys[key]), 'r', swmr=True) #TODO check the path
+        self.hdf_nerf = h5py.File(os.path.join(self.path,"xgaze_" + self.selected_keys[key]), 'r', swmr=True) 
         assert self.hdf_nerf.swmr_mode
 
         # Get face image
@@ -212,7 +213,7 @@ class GazeDataset(Dataset):
             gaze_label = self.hdf_nerf["pitchyaw_head"][idx, :]
             #gaze_label = self.hdf["face_gaze"][idx, :]
             gaze_label = gaze_label.astype(np.float32)
-            head_label = self.hdf_nerf['face_head_pose'][idx, :]
+            head_label = self.hdf_head['face_head_pose'][idx, :]
             head_label = head_label.astype(np.float32)
             entry = {
             'key': key,
@@ -220,6 +221,7 @@ class GazeDataset(Dataset):
             'gaze_a': gaze_label,
             'head_a': head_label,
         }
+            print("--Ours New1-- ", entry["head_a"])
             if self.get_second_sample:
                 all_indices = [i for i in range(self.n) if i != idx]
                 if len(all_indices) == 1:
@@ -245,7 +247,7 @@ class GazeDataset(Dataset):
                 gaze_label = self.hdf_nerf["pitchyaw_head"][idx_b, :]
                 #gaze_label = self.hdf["face_gaze"][idx_b, :]
                 gaze_label = gaze_label.astype(np.float32)
-                head_label = self.hdf_nerf['face_head_pose'][idx_b, :]
+                head_label = self.hdf_head['face_head_pose'][idx_b, :]
                 head_label = head_label.astype(np.float32)
 
                 face_mask = self.hdf_nerf["head_mask"][idx_b, :]
@@ -263,6 +265,8 @@ class GazeDataset(Dataset):
                 entry['right_eye_b'] = right_eye_mask
                 entry['cam_ind_b'] = self.hdf_nerf["cam_index"][idx_b, :]
                 entry['ldms_b'] = self.hdf_nerf["facial_landmarks"][idx_b, :]
+
+                print("--Ours New2-- ", entry["head_b"])
 
 
             return entry
