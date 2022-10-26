@@ -8,7 +8,7 @@
     "xgaze_file": "datasets/xgaze.h5",
     "xgaze_val_file": "datasets/xgaze_val.h5",
     "data_names": ["eth_xgaze", "mpii_face_gaze"],
-    "img_dir":["/data/aruzzi/xgaze_subjects", "/data/aruzzi/mpii_subjects"],
+    "img_dir":["/data/data2/aruzzi/xgaze_subjects", "/data/data2/aruzzi/mpii_subjects"],
     "img_dim": 224,
     "num_images": 100,
     "save_path": "sted",
