@@ -192,7 +192,7 @@ class GazeDataset(Dataset):
     def __getitem__(self, idx):
         key, idx = self.idx_to_kv[idx]
 
-        #self.hdf = h5py.File(os.path.join(self.path,"xgaze_" + self.selected_keys[key]), 'r', swmr=True)
+        self.hdf = h5py.File(os.path.join("/data/data2/aruzzi/train", self.selected_keys[key]), 'r', swmr=True)
 
         self.hdf_nerf = h5py.File(os.path.join(self.path,"xgaze_" + self.selected_keys[key]), 'r', swmr=True) #TODO check the path
         assert self.hdf_nerf.swmr_mode
@@ -206,6 +206,9 @@ class GazeDataset(Dataset):
 
         # Get labels
         if self.is_load_label:
+            print("--Xucong1-- ", self.hdf['face_head_pose'][idx, :])
+            print("--Ours1-- ", self.hdf_nerf['face_head_pose'][idx, :])
+
             gaze_label = self.hdf_nerf["pitchyaw_head"][idx, :]
             #gaze_label = self.hdf["face_gaze"][idx, :]
             gaze_label = gaze_label.astype(np.float32)
@@ -235,6 +238,9 @@ class GazeDataset(Dataset):
                 image = self.preprocess_image(image)
                 image = self.preprocess_entry(image)
                 #image = self.transform(image)
+
+                print("--Xucong2-- ", self.hdf['face_head_pose'][idx_b, :])
+                print("--Ours2-- ", self.hdf_nerf['face_head_pose'][idx_b, :])
 
                 gaze_label = self.hdf_nerf["pitchyaw_head"][idx_b, :]
                 #gaze_label = self.hdf["face_gaze"][idx_b, :]
