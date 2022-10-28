@@ -190,7 +190,7 @@ del saver
 
 if config.load_step != 0:
     #load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '.pt'),device)
-    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_full_cor.pt'),device)
+    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_full.pt'),device)
     logging.info("Loaded checkpoints from step " + str(config.load_step))
 
 # Transfer on the GPU before constructing and optimizer
@@ -506,8 +506,8 @@ def execute_test(log, current_step):
             gt_list.append(target_image_quality[0,:])
             pred_list.append(pred_image_quality[0,:])
 
-            dict_gt_images[name].append(target_image_quality[0,:])
-            dict_pred_images[name].append(pred_image_quality[0,:])
+            #dict_gt_images[name].append(target_image_quality[0,:])
+            #dict_pred_images[name].append(pred_image_quality[0,:])
 
             #full_images_gt_list.append(target_image_quality[0,:])
             #full_images_pred_list.append(pred_image_quality[0,:])
@@ -543,9 +543,11 @@ def execute_test(log, current_step):
                                                 l1_loss, num_images, fid , similarity)
 
     for name in config.data_names:
-        dict_fid[name]  = calculate_FID(gt_images= dict_gt_images[name], pred_images= dict_pred_images[name])
+    #    dict_fid[name]  = calculate_FID(gt_images= dict_gt_images[name], pred_images= dict_pred_images[name])
+         dict_fid[name]  = 0.0
         
-    full_fid = calculate_FID(gt_images= full_images_gt_list, pred_images= full_images_pred_list)    
+    #full_fid = calculate_FID(gt_images= full_images_gt_list, pred_images= full_images_pred_list)    
+    full_fid = 0.0
                             
     if index % log == 0:
         log_all_datasets_evaluation_results(current_step, config.data_names, dict_angular_loss, dict_angular_head_loss, dict_ssim_loss, dict_psnr_loss, dict_lpips_loss,
