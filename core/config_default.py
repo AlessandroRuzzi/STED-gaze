@@ -69,7 +69,7 @@ class DefaultConfig(object):
     data_names = []
     img_dir = []
     img_dim = 224
-    num_images = 100
+    num_images = []
     save_path = '.'
     gazenet_savepath = '.'
     eval_gazenet_savepath = '.'
