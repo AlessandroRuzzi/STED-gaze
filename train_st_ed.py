@@ -185,12 +185,12 @@ _ = saver.load_last_checkpoint()
 del saver
 
 saver = CheckpointsManager(network.GazeHeadNet_train, config.gazenet_savepath,device)
-_ = saver.load_last_checkpoint(xgaze=True)
+_ = saver.load_last_checkpoint()
 del saver
 
 if config.load_step != 0:
     #load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '.pt'),device)
-    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_full.pt'),device)
+    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_orig.pt'),device)
     logging.info("Loaded checkpoints from step " + str(config.load_step))
 
 # Transfer on the GPU before constructing and optimizer
@@ -348,7 +348,7 @@ def execute_test(log, current_step):
     cam_matrix, cam_distortion, cam_translation, cam_rotation = load_cams()
 
 
-    path = "sted/checkpoints/epoch_24_resnet_80_subj_ckpt.pth.tar"
+    path = "sted/checkpoints/epoch_24_resnet_80_head_ckpt.pth.tar"
     model = gaze_network_head().to(device)
 
     state_dict = torch.load(path, map_location=torch.device("cpu"))
