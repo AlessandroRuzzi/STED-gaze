@@ -155,7 +155,7 @@ class GazeDataset(Dataset):
         self.hdf = None
         self.transform = transform
         self.n = n
-        self.target_idx = np.loadtxt("evaluation_target_single_subject.txt", dtype=np.int)
+        self.target_idx = np.loadtxt("mpii_evaluation_target_single_subject.txt", dtype=np.int)
 
     def __len__(self):
         return len(self.idx_to_kv)
@@ -189,7 +189,7 @@ class GazeDataset(Dataset):
         key, idx = self.idx_to_kv[idx]
 
         #self.hdf = h5py.File(os.path.join(self.path,"xgaze_" + self.selected_keys[key]), 'r', swmr=True)
-
+        self.hdf_head = h5py.File(os.path.join("/data/aruzzi/mpii_subjects_head","mpii_subject_head_"  + self.selected_keys[key][-7:]), 'r', swmr=True)
         self.hdf_nerf = h5py.File(os.path.join(self.path,"mpii_" + self.selected_keys[key]), 'r', swmr=True) #TODO check the path
         assert self.hdf_nerf.swmr_mode
 
@@ -205,7 +205,7 @@ class GazeDataset(Dataset):
             gaze_label = self.hdf_nerf["pitchyaw_head"][idx, :]
             #gaze_label = self.hdf["face_gaze"][idx, :]
             gaze_label = gaze_label.astype(np.float32)
-            head_label = self.hdf_nerf['face_head_pose'][idx, :]
+            head_label = self.hdf_head['face_head_pose'][idx, :]
             head_label = head_label.astype(np.float32)
             entry = {
             'key': key,
@@ -235,7 +235,7 @@ class GazeDataset(Dataset):
                 gaze_label = self.hdf_nerf["pitchyaw_head"][idx_b, :]
                 #gaze_label = self.hdf["face_gaze"][idx_b, :]
                 gaze_label = gaze_label.astype(np.float32)
-                head_label = self.hdf_nerf['face_head_pose'][idx_b, :]
+                head_label = self.hdf_head['face_head_pose'][idx_b, :]
                 head_label = head_label.astype(np.float32)
 
                 face_mask = self.hdf_nerf["head_mask"][idx_b, :]

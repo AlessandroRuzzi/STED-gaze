@@ -155,7 +155,7 @@ class GazeDataset(Dataset):
         self.hdf = None
         self.transform = transform
         self.n = n
-        self.target_idx = np.loadtxt("evaluation_target_single_subject.txt", dtype=np.int)
+        self.target_idx = np.loadtxt("gaze_capture_evaluation_target_single_subject.txt", dtype=np.int)
 
     def __len__(self):
         return len(self.idx_to_kv)

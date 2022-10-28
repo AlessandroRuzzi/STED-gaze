@@ -185,12 +185,12 @@ _ = saver.load_last_checkpoint()
 del saver
 
 saver = CheckpointsManager(network.GazeHeadNet_train, config.gazenet_savepath,device)
-_ = saver.load_last_checkpoint()
+_ = saver.load_last_checkpoint(xgaze=True)
 del saver
 
 if config.load_step != 0:
     #load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '.pt'),device)
-    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_orig.pt'),device)
+    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_full.pt'),device)
     logging.info("Loaded checkpoints from step " + str(config.load_step))
 
 # Transfer on the GPU before constructing and optimizer
@@ -273,7 +273,7 @@ def select_cam_matrix(name,cam_matrix,cam_distortion,cam_ind, subject):
     elif name == "columbia":
         return cam_matrix[name], cam_distortion[name]
     elif name == "gaze_capture":
-        pass
+        return cam_matrix[name], cam_distortion[name]
     else:
         print("Dataset not supported")
 
@@ -314,6 +314,11 @@ def load_cams():
     cam_matrix["columbia"] = fs.getNode("Camera_Matrix").mat()
     cam_distortion["columbia"] = fs.getNode("Distortion_Coefficients").mat()
 
+    cam_file_name = "data/gaze_capture/cam/cam" + str(0).zfill(2) + ".xml"
+    fs = cv2.FileStorage(cam_file_name, cv2.FILE_STORAGE_READ)
+    cam_matrix["gaze_capture"] = fs.getNode("Camera_Matrix").mat()
+    cam_distortion["gaze_capture"] = fs.getNode("Distortion_Coefficients").mat()
+
     return cam_matrix,cam_distortion, cam_translation, cam_rotation
 
 def calculate_FID(gt_images, pred_images):
@@ -338,7 +343,7 @@ def execute_test(log, current_step):
 
     for idx,name in enumerate(config.data_names):
         for subject in val_keys[name]:
-            dataloader_all.append(select_dataloader(name, subject, idx, config.img_dir[idx], 1, config.num_images, 0, is_shuffle=False))   
+            dataloader_all.append(select_dataloader(name, subject, idx, config.img_dir[idx], 1, config.num_images[idx], 0, is_shuffle=False))   
 
     cam_matrix, cam_distortion, cam_translation, cam_rotation = load_cams()
 
@@ -504,8 +509,8 @@ def execute_test(log, current_step):
             dict_gt_images[name].append(target_image_quality[0,:])
             dict_pred_images[name].append(pred_image_quality[0,:])
 
-            full_images_gt_list.append(target_image_quality[0,:])
-            full_images_pred_list.append(pred_image_quality[0,:])
+            #full_images_gt_list.append(target_image_quality[0,:])
+            #full_images_pred_list.append(pred_image_quality[0,:])
 
             loss = ssim(target_image_quality, pred_image_quality, data_range=1.).detach().cpu().numpy()
             ssim_loss += loss

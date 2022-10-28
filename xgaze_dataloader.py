@@ -159,7 +159,7 @@ class GazeDataset(Dataset):
         self.hdf = None
         self.transform = transform
         self.n = n
-        self.target_idx = np.loadtxt("evaluation_target_single_subject.txt", dtype=np.int)
+        self.target_idx = np.loadtxt("xgaze_evaluation_target_single_subject.txt", dtype=np.int)
 
     def __len__(self):
         return len(self.idx_to_kv)
@@ -193,7 +193,7 @@ class GazeDataset(Dataset):
         key, idx = self.idx_to_kv[idx]
 
         #self.hdf = h5py.File(os.path.join("/data/data2/aruzzi/train", self.selected_keys[key]), 'r', swmr=True)
-        self.hdf_head = h5py.File(os.path.join("/data/aruzzi/xgaze_subjects_head","xgaze_subject_head_"  + self.selected_keys[key][-7:]), 'r', swmr=True)
+        self.hdf_head = h5py.File(os.path.join("/data/data2/aruzzi/xgaze_subjects_head","xgaze_subject_head_"  + self.selected_keys[key][-7:]), 'r', swmr=True)
 
         self.hdf_nerf = h5py.File(os.path.join(self.path,"xgaze_" + self.selected_keys[key]), 'r', swmr=True) 
         assert self.hdf_nerf.swmr_mode
