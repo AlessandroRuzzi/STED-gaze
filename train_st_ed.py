@@ -154,7 +154,7 @@ if not config.skip_training:
                                   pin_memory=True,
                                   )
     """
-    train_dataset, train_dataloader = get_train_loader(data_dir = "/data/aruzzi/xgaze_subjects",batch_size=int(config.batch_size))
+    train_dataset, train_dataloader = get_train_loader(data_dir = "/data/data2/aruzzi/xgaze_subjects",batch_size=int(config.batch_size))
     all_data['gc/train'] = {'dataset': train_dataset, 'dataloader': train_dataloader}
 
     # Print some stats.
