@@ -38,7 +38,7 @@ trans = transforms.Compose([
         #transforms.ToTensor(),  # this also convert pixel value from [0,255] to [0,1]
         #transforms.Normalize(mean=[0.485, 0.456, 0.406],
         #                     std=[0.229, 0.224, 0.225]),
-        transforms.Resize(size=(224,224)),
+        transforms.Resize(size=(128,128)),
     ])
 
 
@@ -340,10 +340,10 @@ class STED(nn.Module):
                     losses_dict['label_disentangle'] += losses.gaze_angular_loss(y, y_hat)
             total_loss += losses_dict['label_disentangle'] * config.coeff_disentangle_pseudo_label_loss
 
-        feature_h, gaze_h, head_h = self.GazeHeadNet_train((trans(image_b_hat)-self.mean)/self.std, True)
-        feature_t, gaze_t, head_t = self.GazeHeadNet_train((trans(data['image_b'])-self.mean)/self.std, True)
-        #feature_h, gaze_h, head_h = self.GazeHeadNet_train( trans(image_b_hat), True)
-        #feature_t, gaze_t, head_t = self.GazeHeadNet_train( trans(data['image_b']), True)
+        #feature_h, gaze_h, head_h = self.GazeHeadNet_train((trans(image_b_hat)-self.mean)/self.std, True)
+        #feature_t, gaze_t, head_t = self.GazeHeadNet_train((trans(data['image_b'])-self.mean)/self.std, True)
+        feature_h, gaze_h, head_h = self.GazeHeadNet_train( trans(image_b_hat), True)
+        feature_t, gaze_t, head_t = self.GazeHeadNet_train( trans(data['image_b']), True)
         losses_dict['redirection_feature_loss'] = 0
         for i in range(len(feature_h)):
             losses_dict['redirection_feature_loss'] += nn.functional.mse_loss(feature_h[i], feature_t[i].detach())
