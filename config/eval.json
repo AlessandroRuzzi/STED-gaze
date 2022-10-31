@@ -2,7 +2,7 @@
     "mpiigaze_file": "datasets/MPIIGaze.h5",
     "xgaze_file": "datasets/xgaze.h5",
     "xgaze_val_file": "datasets/xgaze_val.h5",
-    "gazenet_savepath": "baseline_estimator_vgg/",
+    "gazenet_savepath": "xgaze_estimator_vgg/",
     "eval_gazenet_savepath": "baseline_estimator_resnet/",
     "data_names": ["eth_xgaze", "mpii_face_gaze", "columbia", "gaze_capture"],
     "img_dir":["/data/aruzzi/xgaze_subjects", "/data/aruzzi/mpii_subjects","/data/aruzzi/columbia_subjects", "/data/aruzzi/gaze_capture_subjects" ],

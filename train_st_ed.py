@@ -181,7 +181,7 @@ network = STED().to(device)
 from checkpoints_manager import CheckpointsManager
 print('---->> ',config.eval_gazenet_savepath)
 saver = CheckpointsManager(network.GazeHeadNet_eval, config.eval_gazenet_savepath,device)
-_ = saver.load_last_checkpoint()
+_ = saver.load_last_checkpoint(xgaze=True)
 del saver
 
 saver = CheckpointsManager(network.GazeHeadNet_train, config.gazenet_savepath,device)
@@ -190,7 +190,7 @@ del saver
 
 if config.load_step != 0:
     #load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '.pt'),device)
-    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_orig.pt'),device)
+    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_full.pt'),device)
     logging.info("Loaded checkpoints from step " + str(config.load_step))
 
 # Transfer on the GPU before constructing and optimizer
