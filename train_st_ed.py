@@ -181,11 +181,11 @@ network = STED().to(device)
 from checkpoints_manager import CheckpointsManager
 print('---->> ',config.eval_gazenet_savepath)
 saver = CheckpointsManager(network.GazeHeadNet_eval, config.eval_gazenet_savepath,device)
-_ = saver.load_last_checkpoint(xgaze=True)
+_ = saver.load_last_checkpoint()
 del saver
 
 saver = CheckpointsManager(network.GazeHeadNet_train, config.gazenet_savepath,device)
-_ = saver.load_last_checkpoint()
+_ = saver.load_last_checkpoint(xgaze=True)
 del saver
 
 if config.load_step != 0:
