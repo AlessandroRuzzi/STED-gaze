@@ -423,7 +423,7 @@ def execute_test(log, current_step):
             nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)  
             batch_images_gt = torch.reshape(batch_images_gt,(1,3,512,512))      
             #batch_images_gt[nonhead_mask_c3b] = 1.0
-            batch_images_gt[nonhead_mask_c3b][:,0,:,:] = 29.0 / 255
+            (batch_images_gt[nonhead_mask_c3b])[:,0,:,:] = 29.0 / 255
             batch_images_gt[nonhead_mask_c3b][:,1,:,:] = 90.0 / 255
             batch_images_gt[nonhead_mask_c3b][:,2,:,:] = 30.0 / 255
 
