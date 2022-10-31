@@ -424,6 +424,8 @@ def execute_test(log, current_step):
             batch_images_gt = torch.reshape(batch_images_gt,(1,3,512,512))      
             batch_images_gt[nonhead_mask_c3b] = 0.5
 
+            print(batch_images_gt[nonhead_mask_c3b].shape)
+
             #batch_images_gt[nonhead_mask_c3b][0] = 29.0 / 255
             #batch_images_gt[nonhead_mask_c3b][1] = 90.0 / 255
             #batch_images_gt[nonhead_mask_c3b][2] = 30.0 / 255
