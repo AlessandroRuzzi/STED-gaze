@@ -185,12 +185,12 @@ _ = saver.load_last_checkpoint()
 del saver
 
 saver = CheckpointsManager(network.GazeHeadNet_train, config.gazenet_savepath,device)
-_ = saver.load_last_checkpoint(xgaze=True)
+_ = saver.load_last_checkpoint()
 del saver
 
 if config.load_step != 0:
     #load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '.pt'),device)
-    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_full.pt'),device)
+    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_orig.pt'),device)
     logging.info("Loaded checkpoints from step " + str(config.load_step))
 
 # Transfer on the GPU before constructing and optimizer
@@ -425,7 +425,7 @@ def execute_test(log, current_step):
             nonhead_mask = batch_head_mask < 0.5   
             nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)  
             batch_images_gt = torch.reshape(batch_images_gt,(1,3,512,512))      
-            batch_images_gt[nonhead_mask_c3b] = 1.0
+            #batch_images_gt[nonhead_mask_c3b] = 1.0
 
             target_image_quality = torch.reshape(
                 batch_images_gt , (1, 3, 512, 512)
@@ -453,7 +453,7 @@ def execute_test(log, current_step):
             nonhead_mask = batch_head_mask < 0.5
             nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)
             batch_images_gen = torch.reshape(batch_images_gen,(1,3,512,512))
-            batch_images_gen[nonhead_mask_c3b] = 1.0
+            #batch_images_gen[nonhead_mask_c3b] = 1.0
 
             pred_image_quality = torch.reshape(
                  batch_images_gen, (1, 3, 512, 512)
