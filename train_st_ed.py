@@ -18,6 +18,7 @@ from torch.utils.data import DataLoader, Subset
 import logging
 from dataset import HDFDataset
 from models.gazeheadResnet import GazeHeadResNet
+from models.gazeheadnet import GazeHeadNet
 from utils import save_images, worker_init_fn, send_data_dict_to_gpu, recover_images, def_test_list, RunningStatistics,\
     adjust_learning_rate, script_init_common, get_example_images, save_model, load_model
 from core import DefaultConfig
@@ -348,10 +349,12 @@ def execute_test(log, current_step):
     cam_matrix, cam_distortion, cam_translation, cam_rotation = load_cams()
 
 
-    path = "sted/checkpoints/epoch_24_resnet_80_subj_ckpt.pth.tar"
+    #path = "sted/checkpoints/epoch_24_resnet_80_subj_ckpt.pth.tar"
+    path = "sted/checkpoints/epoch_60_512_ckpt.pth.tar"
     #path = "baseline_estimator_resnet/checkpoints/at_step_0140000.pth.tar"
-    model = gaze_network_head().to(device)
+    #model = gaze_network_head().to(device)
     #model = GazeHeadResNet().to(device)
+    model = GazeHeadNet().to(device)
 
     state_dict = torch.load(path, map_location=torch.device("cpu"))
     model.load_state_dict(state_dict=state_dict["model_state"])
