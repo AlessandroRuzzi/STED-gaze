@@ -428,7 +428,7 @@ def execute_test(log, current_step):
             nonhead_mask = batch_head_mask < 0.5   
             nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)  
             batch_images_gt = torch.reshape(batch_images_gt,(1,3,512,512))      
-            #batch_images_gt[nonhead_mask_c3b] = 1.0
+            batch_images_gt[nonhead_mask_c3b] = 1.0
 
             target_image_quality = torch.reshape(
                 batch_images_gt , (1, 3, 512, 512)
@@ -456,7 +456,7 @@ def execute_test(log, current_step):
             nonhead_mask = batch_head_mask < 0.5
             nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)
             batch_images_gen = torch.reshape(batch_images_gen,(1,3,512,512))
-            #batch_images_gen[nonhead_mask_c3b] = 1.0
+            batch_images_gen[nonhead_mask_c3b] = 1.0
 
             pred_image_quality = torch.reshape(
                  batch_images_gen, (1, 3, 512, 512)
