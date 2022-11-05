@@ -352,8 +352,8 @@ def execute_test(log, current_step):
     path = "sted/checkpoints/epoch_7_resnet_correct_ckpt.pth.tar"
     #path = "sted/checkpoints/epoch_60_512_ckpt.pth.tar"
     #path = "baseline_estimator_resnet/checkpoints/at_step_0140000.pth.tar"
-    #model = gaze_network_head().to(device)
-    model = GazeHeadResNet().to(device)
+    model = gaze_network_head().to(device)
+    #model = GazeHeadResNet().to(device)
     #odel = GazeHeadNet().to(device)
 
     state_dict = torch.load(path, map_location=torch.device("cpu"))
