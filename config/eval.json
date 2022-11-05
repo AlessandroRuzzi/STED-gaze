@@ -2,7 +2,7 @@
     "mpiigaze_file": "datasets/MPIIGaze.h5",
     "xgaze_file": "datasets/xgaze.h5",
     "xgaze_val_file": "datasets/xgaze_val.h5",
-    "gazenet_savepath": "xgaze_estimator_vgg/",
+    "gazenet_savepath": "baseline_estimator_vgg/",
     "eval_gazenet_savepath": "baseline_estimator_resnet/",
     "data_names": ["eth_xgaze", "mpii_face_gaze", "columbia", "gaze_capture"],
     "img_dir":["/data/data2/aruzzi/xgaze_subjects", "/data/data2/aruzzi/mpii_subjects","/data/data2/aruzzi/columbia_subjects", "/data/data2/aruzzi/gaze_capture_subjects" ],
@@ -38,7 +38,7 @@
     "base_learning_rate": 0.00005,
     "use_apex": false,
     "compute_full_result": true,
-    "load_step": 100800,
+    "load_step": 144000,
     "store_redirect_dataset": false,
     "semi_supervised":false
 }
