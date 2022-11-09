@@ -349,7 +349,7 @@ def execute_test(log, current_step):
     cam_matrix, cam_distortion, cam_translation, cam_rotation = load_cams()
 
 
-    path = "sted/checkpoints/epoch_7_resnet_correct_ckpt.pth.tar"
+    path = "sted/checkpoints/epoch_16_resnet_correct_ckpt.pth.tar"
     #path = "sted/checkpoints/epoch_60_512_ckpt.pth.tar"
     #path = "baseline_estimator_resnet/checkpoints/at_step_0140000.pth.tar"
     model = gaze_network_head().to(device)
