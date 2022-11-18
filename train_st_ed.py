@@ -640,7 +640,7 @@ def personal_calibration(num_images):
                     output_face_patch[counter_save_index] = image
                     counter_save_index +=1
 
-                    if i%10 == 0:
+                    if i%1 == 0:
                         res_img = np.concatenate(
                             [
                                 #batch_images_norm_gt.reshape(1, 224, 224, 3),
