@@ -40,6 +40,7 @@ from gaze_estimation_utils import normalize
 import scipy.io
 from logging_utils import log_evaluation_image, log_one_subject_evaluation_results, log_all_datasets_evaluation_results
 from face_recognition.evaluation_similarity import evaluation_similarity
+import h5py
 
 trans = transforms.Compose([
         transforms.ToPILImage(),
