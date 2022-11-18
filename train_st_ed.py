@@ -559,6 +559,132 @@ def execute_test(log, current_step):
         log_all_datasets_evaluation_results(current_step, config.data_names, dict_angular_loss, dict_angular_head_loss, dict_ssim_loss, dict_psnr_loss, dict_lpips_loss,
                                                 dict_l1_loss, dict_num_images,dict_fid, full_fid, dict_similarity)
 
+def personal_calibration(num_images):
+    refer_list_file = os.path.join("data/eth_xgaze", "train_test_split.json")
+
+    with open(refer_list_file, "r") as f:
+        datastore = json.load(f)
+
+    val_keys = datastore["val_gaze"]
+
+    face_model_load =  np.loadtxt('data/eth_xgaze/face_model.txt') 
+
+    cam_matrix, cam_distortion, cam_translation, cam_rotation = load_cams()
+
+    for t, subject in enumerate(val_keys):
+
+        for iter in range(1):
+
+            train_dataloader = xgaze_get_val_loader(data_dir="/data/data2/aruzzi/xgaze_subjects", batch_size=1, num_val_images=200, num_workers= 0, is_shuffle= False, subject=subject, evaluate='landmark')
+
+
+            predicted_images = []
+            fit_iterations_counter = 0
+
+            random_fit_images_num = []
+            for i in range(num_images):
+                random_fit_images_num.append(random.randint(0,199))
+            
+            print(random_fit_images_num)
+
+            save_path = "/local/home/aruzzi/personal_calibration_files_sted/" 
+            if not os.path.exists(save_path):
+                os.makedirs(save_path)
+            hdf_path = save_path + subject[:-3] + "_nsample_" +  str(num_images) + "_iter_" + str(iter) + ".h5"
+            output_h5_id = h5py.File(hdf_path, "w")
+
+            output_face_patch = []
+
+
+            ## predict images to fine tune the pre traind gaze estimator
+
+            if not output_face_patch:
+                output_face_patch = output_h5_id.create_dataset(
+                "face_patch",
+                shape=(200, 224, 224, 3),
+                compression="lzf",
+                dtype=np.uint8,
+                chunks=(1, 224, 224, 3),
+            )     
+
+            counter_save_index = 0
+               
+            for i,entry in enumerate(dataloader):
+                ldms = entry["ldms_b"][0]
+                batch_head_mask = torch.reshape(entry["mask_b"], (1, 1, 512, 512))
+                cam_ind = entry["cam_ind_b"]
+                camera_matrix, camera_distortion = select_cam_matrix("eth_xgaze", cam_matrix,cam_distortion, cam_ind, subject)
+
+                if i not in random_fit_images_num:
+
+                    input_dict = send_data_dict_to_gpu(entry, device)
+                    output_dict, loss_dict = network(input_dict)
+
+                    image_gen = np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
+
+                    batch_images_gen = trans_normalize(image_gen[0,:])
+                    nonhead_mask = batch_head_mask < 0.5
+                    nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)
+                    batch_images_gen = torch.reshape(batch_images_gen,(1,3,512,512))
+                    batch_images_gen[nonhead_mask_c3b] = 1.0
+
+                    batch_images_norm_pre = normalize(
+                        (batch_images_gen.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(
+                            np.uint8
+                        )[0],
+                        camera_matrix,
+                        camera_distortion,
+                        face_model_load,
+                        ldms,
+                        224,
+                    )
+
+                    image = cv2.cvtColor(batch_images_norm_pre, cv2.COLOR_RGB2BGR)
+
+                    output_face_patch[counter_save_index] = image
+                    counter_save_index +=1
+
+                    if i%10 == 0:
+                        res_img = np.concatenate(
+                            [
+                                #batch_images_norm_gt.reshape(1, 224, 224, 3),
+                                batch_images_norm_pre.reshape(1, 224, 224, 3),
+                            ],
+                            axis=2,
+                        )
+                        img = Image.fromarray(res_img[0])
+                        log_image = wandb.Image(img)
+                        wandb.log(
+                            {" Target Normalized | Prediction Normalized ": log_image}
+                        )
+                else:
+
+                    image_gt = ((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0).astype(np.uint8)
+                    batch_images_gt = trans_normalize(image_gt[0,:])
+                    nonhead_mask = batch_head_mask < 0.5   
+                    nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)  
+                    batch_images_gt = torch.reshape(batch_images_gt,(1,3,512,512))      
+                    batch_images_gt[nonhead_mask_c3b] = 1.0
+                    batch_images_norm = normalize(
+                        (batch_images_gt.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(
+                            np.uint8
+                        )[0],
+                        camera_matrix,
+                        camera_distortion,
+                        face_model_load,
+                        ldms,
+                        224,
+                    )
+
+                    image = cv2.cvtColor(batch_images_norm, cv2.COLOR_RGB2BGR)
+                    #cv2.imwrite(os.path.join(save_path, "image_" + str(i).zfill(4) + ".jpg"), image)
+
+                    output_face_patch[counter_save_index] = image
+                    counter_save_index +=1
+
+
+            output_h5_id.close()
+
 
 def execute_visualize(data):
     output_dict, losses_dict = network(test_visualize)
@@ -579,6 +705,9 @@ if config.use_tensorboard and ((not config.skip_training) or config.compute_full
     from tensorboardX import SummaryWriter
     tensorboard = SummaryWriter(logdir=config.save_path)
 current_step = config.load_step
+
+for i in range(10):
+    personal_calibration(i+1)
 
 if not config.skip_training:
     logging.info('Training')

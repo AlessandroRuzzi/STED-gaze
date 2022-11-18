@@ -191,7 +191,7 @@ class GazeDataset(Dataset):
 
     def __getitem__(self, idx):
         key, idx = self.idx_to_kv[idx]
-
+        idx = 0
         #self.hdf = h5py.File(os.path.join("/data/data2/aruzzi/train", self.selected_keys[key]), 'r', swmr=True)
         self.hdf_head = h5py.File(os.path.join("/data/data2/aruzzi/xgaze_subjects_head","xgaze_subject_head_"  + self.selected_keys[key][-7:]), 'r', swmr=True)
 
@@ -227,6 +227,7 @@ class GazeDataset(Dataset):
                 elif self.sub_folder != 'val':
                     idx_b = np.random.choice(all_indices)
                 elif self.sub_folder == 'val':
+                    #idx_b = self.target_idx[idx]
                     idx_b = self.target_idx[idx]
 
                 
