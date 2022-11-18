@@ -574,11 +574,7 @@ def personal_calibration(num_images):
     for t, subject in enumerate(val_keys):
 
         for iter in range(1):
-            train_dataloader = xgaze_get_val_loader(data_dir="/data/data2/aruzzi/xgaze_subjects", batch_size=1, num_val_images=200, num_workers= 0, is_shuffle= False, subject=subject, evaluate='landmark')
-
-
-            predicted_images = []
-            fit_iterations_counter = 0
+            train_dataloader = xgaze_get_val_loader(data_dir="/data/data2/aruzzi/xgaze_subjects", batch_size=1, num_val_images=200, num_workers= 0, is_shuffle= False, subject=subject)
 
             random_fit_images_num = []
             for i in range(num_images):
@@ -608,7 +604,7 @@ def personal_calibration(num_images):
 
             counter_save_index = 0
                
-            for i,entry in enumerate(dataloader):
+            for i,entry in enumerate(train_dataloader):
                 ldms = entry["ldms_b"][0]
                 batch_head_mask = torch.reshape(entry["mask_b"], (1, 1, 512, 512))
                 cam_ind = entry["cam_ind_b"]
