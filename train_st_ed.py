@@ -541,7 +541,7 @@ def execute_test(log, current_step):
             print("L1 Distance: ", l1_loss/num_images,loss, num_images)
 
             if index % log == 0:
-                log_evaluation_image(pred_normalized_log, target_normalized_log, ((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0).astype(np.uint8), image_gt, image_gen)
+                log_evaluation_image(pred_normalized_log, target_normalized_log, ((input_dict['image_a'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0).astype(np.uint8), target_image_quality, pred_image_quality)
 
         fid = calculate_FID(gt_images= gt_list, pred_images= pred_list)
 
@@ -702,9 +702,9 @@ if config.use_tensorboard and ((not config.skip_training) or config.compute_full
     tensorboard = SummaryWriter(logdir=config.save_path)
 current_step = config.load_step
 
-for i in range(10):
-    print("here")
-    personal_calibration(i+1)
+#for i in range(10):
+#    print("here")
+#    personal_calibration(i+1)
 
 if not config.skip_training:
     logging.info('Training')
