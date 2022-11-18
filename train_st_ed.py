@@ -574,7 +574,7 @@ def personal_calibration(num_images):
     for t, subject in enumerate(val_keys):
 
         for iter in range(1):
-
+            print("ok")
             train_dataloader = xgaze_get_val_loader(data_dir="/data/data2/aruzzi/xgaze_subjects", batch_size=1, num_val_images=200, num_workers= 0, is_shuffle= False, subject=subject, evaluate='landmark')
 
 
@@ -707,6 +707,7 @@ if config.use_tensorboard and ((not config.skip_training) or config.compute_full
 current_step = config.load_step
 
 for i in range(10):
+    print("here")
     personal_calibration(i+1)
 
 if not config.skip_training:
