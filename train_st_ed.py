@@ -426,7 +426,7 @@ def execute_test(log, current_step):
             image_gen = np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
 
             batch_images_gt = trans_normalize(image_gt[0,:])
-            target_image_quality = batch_images_gt
+            
             #nonhead_mask = batch_head_mask < 0.5   
             #nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)  
             batch_images_gt = torch.reshape(batch_images_gt,(1,3,512,512))      
@@ -435,6 +435,7 @@ def execute_test(log, current_step):
             #target_image_quality = torch.reshape(
             #    batch_images_gt , (1, 3, 512, 512)
             #).to(device)
+            target_image_quality = batch_images_gt
             
 
             batch_images_gt_norm = normalize(
@@ -458,7 +459,7 @@ def execute_test(log, current_step):
 
 
             batch_images_gen = trans_normalize(image_gen[0,:])
-            pred_image_quality = batch_images_gen
+            
             #nonhead_mask = batch_head_mask < 0.5
             #nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)
             batch_images_gen = torch.reshape(batch_images_gen,(1,3,512,512))
@@ -467,6 +468,7 @@ def execute_test(log, current_step):
             #pred_image_quality = torch.reshape(
             #     batch_images_gen, (1, 3, 512, 512)
             #).to(device)
+            pred_image_quality = batch_images_gen
 
             batch_images_gen_norm = normalize(
                 (batch_images_gen.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(
