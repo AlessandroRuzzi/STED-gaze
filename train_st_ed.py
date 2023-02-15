@@ -425,10 +425,8 @@ def execute_test(log, current_step):
             image_gt = ((input_dict['image_b'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0).astype(np.uint8)
             image_gen = np.clip(((output_dict['image_b_hat'].detach().cpu().permute(0, 2, 3, 1).numpy() +1) * 255.0/2.0),0,255).astype(np.uint8)
 
-            batch_images_gt = image_gt
-            target_image_quality = image_gt
-
-            #batch_images_gt = trans_normalize(image_gt[0,:])
+            batch_images_gt = trans_normalize(image_gt[0,:])
+            target_image_quality = batch_images_gt
             #nonhead_mask = batch_head_mask < 0.5   
             #nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)  
             #batch_images_gt = torch.reshape(batch_images_gt,(1,3,512,512))      
@@ -457,10 +455,10 @@ def execute_test(log, current_step):
             )  
             pitchyaw_gt, head_gt = model(batch_images_gt_norm)
 
-            batch_images_gen = image_gen
-            pred_image_quality = image_gen
 
-            #batch_images_gen = trans_normalize(image_gen[0,:])
+
+            batch_images_gen = trans_normalize(image_gen[0,:])
+            pred_image_quality = batch_images_gen
             #nonhead_mask = batch_head_mask < 0.5
             #nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)
             #batch_images_gen = torch.reshape(batch_images_gen,(1,3,512,512))
