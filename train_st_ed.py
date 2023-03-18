@@ -192,7 +192,7 @@ del saver
 
 if config.load_step != 0:
     #load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '.pt'),device)
-    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_full_white_10.pt'),device)
+    load_model(network, os.path.join(config.save_path, "checkpoints", str(config.load_step) + '_final_green_10.pt'),device)
     logging.info("Loaded checkpoints from step " + str(config.load_step))
 
 # Transfer on the GPU before constructing and optimizer
@@ -427,15 +427,15 @@ def execute_test(log, current_step):
 
             batch_images_gt = trans_normalize(image_gt[0,:])
             
-            #nonhead_mask = batch_head_mask < 0.5   
-            #nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)  
+            nonhead_mask = batch_head_mask < 0.5   
+            nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)  
             batch_images_gt = torch.reshape(batch_images_gt,(1,3,512,512))      
-            #batch_images_gt[nonhead_mask_c3b] = 1.0
+            batch_images_gt[nonhead_mask_c3b] = 1.0
 
-            #target_image_quality = torch.reshape(
-            #    batch_images_gt , (1, 3, 512, 512)
-            #).to(device)
-            target_image_quality = batch_images_gt
+            target_image_quality = torch.reshape(
+                batch_images_gt , (1, 3, 512, 512)
+            ).to(device)
+            #target_image_quality = batch_images_gt
             
 
             batch_images_gt_norm = normalize(
@@ -460,15 +460,15 @@ def execute_test(log, current_step):
 
             batch_images_gen = trans_normalize(image_gen[0,:])
             
-            #nonhead_mask = batch_head_mask < 0.5
-            #nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)
+            nonhead_mask = batch_head_mask < 0.5
+            nonhead_mask_c3b = nonhead_mask.expand(-1, 3, -1, -1)
             batch_images_gen = torch.reshape(batch_images_gen,(1,3,512,512))
-            #batch_images_gen[nonhead_mask_c3b] = 1.0
+            batch_images_gen[nonhead_mask_c3b] = 1.0
 
-            #pred_image_quality = torch.reshape(
-            #     batch_images_gen, (1, 3, 512, 512)
-            #).to(device)
-            pred_image_quality = batch_images_gen
+            pred_image_quality = torch.reshape(
+                 batch_images_gen, (1, 3, 512, 512)
+            ).to(device)
+            #pred_image_quality = batch_images_gen
 
             batch_images_gen_norm = normalize(
                 (batch_images_gen.detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(
