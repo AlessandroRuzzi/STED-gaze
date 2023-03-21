@@ -508,7 +508,7 @@ def execute_test(log, current_step):
             sim_gen = ( torch.reshape(
                 trans_resize(batch_images_gen[0,:]) , (1, 3, config.img_dim, config.img_dim)
             ).to(device).detach().cpu().permute(0, 2, 3, 1).numpy() * 255).astype(np.uint8)[0]
-            
+            loss = evaluation_similarity(sim_gt, sim_gen)
             try:
                 loss = evaluation_similarity(sim_gt, sim_gen)
             except:
