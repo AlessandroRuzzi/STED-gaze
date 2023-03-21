@@ -25,7 +25,7 @@ def evaluation_similarity(gt_image, gen_image):
     #logger = logging.getLogger('api')
 
     with open('face_recognition/config/model_conf.yaml') as f:
-        model_conf = yaml.load(f)
+        model_conf = yaml.safe_load(f)
 
     model_path = 'face_recognition/models'
 
