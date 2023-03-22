@@ -300,7 +300,7 @@ def load_cams():
         cam_translation["eth_xgaze"].append(fs.getNode("cam_translation"))
         cam_rotation["eth_xgaze"].append(fs.getNode("cam_rotation"))
         fs.release()
-    """
+
     for i in range(15):
         file_name = os.path.join(
         "data/mpii_face_gaze/cam", "Camera" + str(i).zfill(2) + ".mat"
@@ -320,7 +320,7 @@ def load_cams():
     fs = cv2.FileStorage(cam_file_name, cv2.FILE_STORAGE_READ)
     cam_matrix["gaze_capture"] = fs.getNode("Camera_Matrix").mat()
     cam_distortion["gaze_capture"] = fs.getNode("Distortion_Coefficients").mat()
-    """
+
     return cam_matrix,cam_distortion, cam_translation, cam_rotation
 
 def calculate_FID(gt_images, pred_images):
