@@ -557,11 +557,11 @@ def execute_test(log, current_step):
                                                 l1_loss, num_images, fid , similarity)
 
     for name in config.data_names:
-    #    dict_fid[name]  = calculate_FID(gt_images= dict_gt_images[name], pred_images= dict_pred_images[name])
-         dict_fid[name]  = 0.0
+         dict_fid[name]  = calculate_FID(gt_images= dict_gt_images[name], pred_images= dict_pred_images[name])
+         #dict_fid[name]  = 0.0
         
-    #full_fid = calculate_FID(gt_images= full_images_gt_list, pred_images= full_images_pred_list)    
-    full_fid = 0.0
+    full_fid = calculate_FID(gt_images= full_images_gt_list, pred_images= full_images_pred_list)    
+    #full_fid = 0.0
                             
     if index % log == 0:
         log_all_datasets_evaluation_results(current_step, config.data_names, dict_angular_loss, dict_angular_head_loss, dict_ssim_loss, dict_psnr_loss, dict_lpips_loss,
