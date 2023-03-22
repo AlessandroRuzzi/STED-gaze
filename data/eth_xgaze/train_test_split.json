@@ -82,11 +82,21 @@
      "subject0111.h5"
   ],
   "val": [
-     "subject0110.h5", 
-     "subject0116.h5", 
-     "subject0115.h5", 
-     "subject0113.h5", 
-     "subject0119.h5"
+    "subject0012.h5",
+    "subject0022.h5", 
+    "subject0025.h5", 
+    "subject0047.h5", 
+    "subject0054.h5", 
+    "subject0074.h5", 
+    "subject0086.h5", 
+    "subject0094.h5", 
+    "subject0096.h5", 
+    "subject0097.h5", 
+    "subject0110.h5", 
+    "subject0116.h5", 
+    "subject0115.h5", 
+    "subject0113.h5", 
+    "subject0119.h5"
   ],
   "val_gaze": [
   ],
